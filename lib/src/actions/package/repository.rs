@@ -38,7 +38,7 @@ impl Action for PackageRepository {
         let provider = box_provider.deref();
 
         let span = span!(
-            tracing::Level::INFO,
+            tracing::Level::DEBUG,
             "package.repository",
             provider = provider.name()
         )

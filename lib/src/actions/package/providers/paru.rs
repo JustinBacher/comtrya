@@ -126,28 +126,39 @@ impl PackageProvider for Paru {
     }
 
     fn install(&self, package: &PackageVariant, _contexts: &Contexts) -> anyhow::Result<Vec<Step>> {
-        Ok(vec![Step {
-            atom: Box::new(Exec {
-                command: String::from("paru"),
-                arguments: [
-                    vec![
-                        String::from("-Sq"),
-                        String::from("--batchinstall"),
-                        String::from("--needed"),
-                        String::from("--noconfirm"),
-                        String::from("--noprogressbar"),
-                        String::from("--skipreview"),
-                        String::from("--sudoloop"),
-                        String::from("--useask"),
-                    ],
-                    package.extra_args.clone(),
-                    package.packages(),
-                ]
-                .concat(),
-                ..Default::default()
-            }),
-            initializers: vec![],
-            finalizers: vec![],
-        }])
+        Ok(vec![
+            //Step {
+            //    atom: Box::new(Exec {
+            //        command: String::from(":"),
+            //        arguments: vec![],
+            //        privileged: true,
+            //    }),
+            //    initializers: vec![],
+            //    finalizers: vec![],
+            //},
+            Step {
+                atom: Box::new(Exec {
+                    command: String::from("paru"),
+                    arguments: [
+                        vec![
+                            String::from("-Sq"),
+                            String::from("--batchinstall"),
+                            String::from("--needed"),
+                            String::from("--noconfirm"),
+                            String::from("--noprogressbar"),
+                            String::from("--skipreview"),
+                            String::from("--sudoloop"),
+                            String::from("--useask"),
+                        ],
+                        package.extra_args.clone(),
+                        package.packages(),
+                    ]
+                    .concat(),
+                    ..Default::default()
+                }),
+                initializers: vec![],
+                finalizers: vec![],
+            },
+        ])
     }
 }
