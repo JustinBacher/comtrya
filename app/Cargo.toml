@@ -23,6 +23,9 @@ update-informer = "1.1"
 dirs-next = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_yml = "0"
+indicatif = { version = "0.17.9", features = ["futures", "improved_unicode", "tokio"] }
+tracing-indicatif = "0.3.8"
+tracing-core = "0.1.33"
 
 [dev-dependencies]
 assert_cmd = "2.0"

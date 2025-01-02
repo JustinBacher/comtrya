@@ -1,9 +1,16 @@
 use crate::atoms::Outcome;
 
+use std::borrow::BorrowMut;
+use std::io::{BufRead, BufReader};
+use std::ops::Deref;
+use std::process::{Child, Command};
+
 use super::super::Atom;
 use crate::utilities;
-use anyhow::anyhow;
-use tracing::debug;
+use anyhow::{anyhow, Result};
+use elevated_command::Command as ElevatedCommand;
+use tracing::{debug, debug_span, info, span, Level};
+use tracing_indicatif::{span_ext::IndicatifSpanExt, suspend_tracing_indicatif};
 
 #[derive(Default)]
 pub struct Exec {
@@ -54,7 +61,7 @@ impl Exec {
     }
 
     fn elevate(&mut self) -> anyhow::Result<()> {
-        tracing::info!(
+        tracing::debug!(
             "Privilege elevation required to run `{} {}`. Validating privileges ...",
             &self.command,
             &self.arguments.join(" ")
@@ -62,25 +69,38 @@ impl Exec {
 
         let privilege_provider = utilities::get_binary_path(&self.privilege_provider)?;
 
-        match std::process::Command::new(privilege_provider)
-            .stdin(std::process::Stdio::inherit())
-            .stdout(std::process::Stdio::inherit())
-            .stderr(std::process::Stdio::inherit())
-            .arg("--validate")
-            .output()
-        {
-            Ok(std::process::Output { status, .. }) if status.success() => Ok(()),
+        let _span = debug_span!("priviledge escalation").entered();
 
-            Ok(std::process::Output { stderr, .. }) => Err(anyhow!(
-                "Command requires privilege escalation, but couldn't elevate privileges: {}",
-                String::from_utf8(stderr)?
-            )),
+        suspend_tracing_indicatif(|| {
+            let mut command = std::process::Command::new(privilege_provider)
+                .stdin(std::process::Stdio::inherit())
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::inherit())
+                .arg("--validate")
+                .spawn()?;
 
-            Err(err) => Err(anyhow!(
-                "Command requires privilege escalation, but couldn't elevate privileges: {}",
-                err
-            )),
-        }
+            if let Some(stdout) = command.stdout.take() {
+                let reader = BufReader::new(stdout);
+                for line in reader.lines() {
+                    let line = line?;
+                    debug!("{}", line);
+                }
+            }
+
+            match command.wait_with_output() {
+                Ok(std::process::Output { status, .. }) if status.success() => Ok(()),
+
+                Ok(std::process::Output { stderr, .. }) => Err(anyhow!(
+                    "Command requires privilege escalation, but couldn't elevate privileges: {}",
+                    String::from_utf8(stderr)?
+                )),
+
+                Err(err) => Err(anyhow!(
+                    "Command requires privilege escalation, but couldn't elevate privileges: {}",
+                    err
+                )),
+            }
+        })
     }
 }
 
@@ -111,10 +131,12 @@ impl Atom for Exec {
     }
 
     fn execute(&mut self) -> anyhow::Result<()> {
-        let (command, arguments) = self.elevate_if_required();
+        let span = debug_span!("package.install", provider = self.command);
+        span.pb_start();
 
+        let (command, arguments) = self.elevate_if_required();
         let command = utilities::get_binary_path(&command)
-            .or_else(|_| Err(anyhow!("Command `{}` not found in path", command)))?;
+            .map_err(|_| anyhow!("Command `{}` not found in path", command))?;
 
         // If we require root, we need to use sudo with inherited IO
         // to ensure the user can respond if prompted for a password
@@ -127,16 +149,60 @@ impl Atom for Exec {
             }
         }
 
-        match std::process::Command::new(&command)
+        let mut process = Command::new(&command)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
             .envs(self.environment.clone())
             .args(&arguments)
-            .current_dir(&self.working_dir.clone().unwrap_or_else(|| {
+            .current_dir(self.working_dir.clone().unwrap_or_else(|| {
                 std::env::current_dir()
                     .map(|current_dir| current_dir.display().to_string())
                     .expect("Failed to get current directory")
-            }))
-            .output()
-        {
+            }));
+        let child = process.spawn();
+
+        let mut command = match child {
+            Ok(cmd) => cmd,
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
+                let c = Command::new(&command)
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .envs(self.environment.clone())
+                    .args(&arguments)
+                    .current_dir(self.working_dir.clone().unwrap_or_else(|| {
+                        std::env::current_dir()
+                            .map(|current_dir| current_dir.display().to_string())
+                            .expect("Failed to get current directory")
+                    }));
+                let mut elevated = ElevatedCommand::new(*c).into_inner();
+                elevated.spawn()?
+            }
+            Err(e) => {
+                return Err(anyhow!("Error running command: {e}"));
+            }
+        };
+
+        let stdout = command.stdout.take().expect("Failed to capture stdout");
+        let stderr = command.stderr.take().expect("Failed to capture stderr");
+
+        let mut stdout_reader = BufReader::new(stdout).lines();
+        let mut stderr_reader = BufReader::new(stderr).lines();
+
+        loop {
+            match (stdout_reader.next(), stderr_reader.next()) {
+                // TODO: Color code stderr
+                (Some(Ok(out_line)), Some(Ok(err_line))) => {
+                    span.pb_set_message(&format!("{out_line:?}"));
+                    span.pb_set_message(&format!("{err_line:?}"));
+                }
+                (Some(Ok(line)), _) => span.pb_set_message(&format!("{line:?}")),
+                (_, Some(Ok(line))) => span.pb_set_message(&format!("{line:?}")),
+                (None, None) => break,
+                _ => continue,
+            }
+        }
+
+        match command.wait_with_output() {
             Ok(output) if output.status.success() => {
                 self.status.stdout = String::from_utf8(output.stdout)?;
                 self.status.stderr = String::from_utf8(output.stderr)?;

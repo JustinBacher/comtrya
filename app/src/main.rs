@@ -1,16 +1,39 @@
+#[macro_use]
+extern crate tracing_indicatif;
+
 use crate::commands::ComtryaCommand;
 use crate::config::{Commands, GlobalArgs};
 
 use std::io;
+use std::thread::sleep;
+use std::time::Duration;
 
 use comtrya_lib::contexts::build_contexts;
 use comtrya_lib::contexts::Contexts;
 use comtrya_lib::manifests;
 
 use clap::Parser;
-use tracing::{error, Level};
-
-#[allow(unused_imports)]
+use indicatif::ProgressState;
+use indicatif::ProgressStyle;
+use tracing::instrument::WithSubscriber;
+use tracing::{error, Instrument, Level, Metadata};
+use tracing_core::span;
+use tracing_core::{
+    span::{Attributes, Id},
+    Callsite, LevelFilter, Subscriber,
+};
+use tracing_indicatif::filter::hide_indicatif_span_fields;
+use tracing_indicatif::filter::IndicatifFilter;
+use tracing_indicatif::span_ext::IndicatifSpanExt;
+use tracing_indicatif::IndicatifLayer;
+use tracing_subscriber::filter::filter_fn;
+use tracing_subscriber::fmt::format::DefaultFields;
+use tracing_subscriber::fmt::FormatFields;
+use tracing_subscriber::layer::Filter;
+use tracing_subscriber::layer::Layer;
+use tracing_subscriber::registry::{LookupSpan, SpanData, SpanRef};
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::Registry;
 use tracing_subscriber::{fmt::writer::MakeWriterExt, layer::SubscriberExt, FmtSubscriber};
 
 mod commands;
@@ -24,6 +47,8 @@ pub struct Runtime {
     pub(crate) contexts: Contexts,
 }
 
+struct CompletionLayer;
+
 pub(crate) fn execute(runtime: Runtime) -> anyhow::Result<()> {
     match &runtime.args.command {
         Commands::Apply(apply) => apply.execute(&runtime),
@@ -33,30 +58,46 @@ pub(crate) fn execute(runtime: Runtime) -> anyhow::Result<()> {
         Commands::GenCompletions(gen_completions) => gen_completions.execute(&runtime),
     }
 }
+pub fn get_child_msgs(state: &ProgressState, w: &mut dyn std::fmt::Write) {
+    let span_data = state.in_current_span();
+    let _ = w.write_str(&format!(
+        "{:?}",
+        span_data
+            .span()
+            .field("msg")
+            .map(|f| f.to_string())
+            .unwrap_or_default()
+    ));
+}
 
 fn configure_tracing(args: &GlobalArgs) {
-    let stdout_writer = match args.verbose {
-        0 => io::stdout.with_max_level(tracing::Level::INFO),
-        1 => io::stdout.with_max_level(tracing::Level::DEBUG),
-        _ => io::stdout.with_max_level(tracing::Level::TRACE),
-    };
+    let indicatif_layer = IndicatifLayer::new()
+        .with_progress_style(
+            ProgressStyle::with_template(
+                "{span_child_prefix}{span_fields} -- {span_name} {wide_msg}}",
+            )
+            .expect("Unable to create style"), //.with_key("child_msg", get_child_msgs),
+        )
+        .with_span_field_formatter(hide_indicatif_span_fields(DefaultFields::new()));
 
-    let builder = FmtSubscriber::builder()
-        .with_max_level(Level::TRACE)
-        .with_ansi(!args.no_color)
-        .with_target(false)
-        .with_writer(stdout_writer)
-        .without_time();
-
-    #[cfg(target_os = "linux")]
-    if let Ok(layer) = tracing_journald::layer() {
-        tracing::subscriber::set_global_default(builder.finish().with(layer))
-            .expect("Unable to set a global subscriber");
-        return;
-    }
-
-    tracing::subscriber::set_global_default(builder.finish())
-        .expect("Unable to set a global subscriber");
+    tracing_subscriber::registry()
+        //.with(
+        //    tracing_subscriber::fmt::layer()
+        //        .compact()
+        //        .with_ansi(true)
+        //        .with_line_number(false)
+        //        .with_thread_names(false)
+        //        .with_target(false)
+        //        .with_file(false)
+        //        .with_writer(indicatif_layer.get_stderr_writer())
+        //        .with_filter(LevelFilter::from_level(Level::INFO)),
+        //)
+        .with(
+            indicatif_layer
+                .with_filter(IndicatifFilter::new(true))
+                .with_filter(LevelFilter::from_level(Level::DEBUG)),
+        )
+        .init();
 }
 
 fn main() -> anyhow::Result<()> {

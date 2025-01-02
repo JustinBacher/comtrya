@@ -9,7 +9,7 @@ use petgraph::{visit::DfsPostOrder, Graph};
 use rhai::Engine;
 use std::path::PathBuf;
 use std::{collections::HashMap, ops::Deref};
-use tracing::{debug, error, info, instrument, span, trace, warn};
+use tracing::{debug, debug_span, error, info, instrument, span, trace, warn};
 
 #[derive(Parser, Debug)]
 pub(crate) struct Apply {
@@ -202,7 +202,7 @@ impl ComtryaCommand for Apply {
 
                 let span_manifest = span!(
                     tracing::Level::INFO,
-                    "",
+                    "manifest",
                     manifest = m1.name.as_deref().unwrap_or("Cannot extract name"),
                 )
                 .entered();
@@ -238,13 +238,12 @@ impl ComtryaCommand for Apply {
 
                     if !where_result {
                         info!("Skip manifest, because 'where' conditions were false!");
-                        span_manifest.exit();
                         continue;
                     }
                 }
 
                 for action in m1.actions.iter() {
-                    let span_action = span!(tracing::Level::INFO, "", %action).entered();
+                    let span_action = debug_span!("step", action = %action).entered();
 
                     let action = action.inner_ref();
 
@@ -268,7 +267,6 @@ impl ComtryaCommand for Apply {
 
                     if steps.peek().is_none() {
                         info!("nothing to be done to reconcile action");
-                        span_action.exit();
                         continue;
                     }
 
@@ -297,19 +295,18 @@ impl ComtryaCommand for Apply {
                 }
 
                 if dry_run {
-                    span_manifest.exit();
                     continue;
                 }
 
                 if !successful {
                     error!("Failed");
-                    span_manifest.exit();
                     break;
                 }
-
-                info!("Completed");
-                span_manifest.exit();
             }
+
+            // TODO: Make working finish lines
+            // this errors
+            //indicatif_println!(" Completed {manifest:?}");
         });
 
         Ok(())

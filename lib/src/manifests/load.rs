@@ -51,7 +51,7 @@ pub fn load(manifest_path: PathBuf, contexts: &Contexts) -> HashMap<String, Mani
         .for_each(|entry| {
             if let Ok(filename) = entry {
                 let span = span!(
-                    tracing::Level::INFO,
+                    tracing::Level::DEBUG,
                     "manifest_load",
                     manifest = filename.file_name().to_str()
                 )
