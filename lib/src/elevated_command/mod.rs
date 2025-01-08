@@ -7,7 +7,7 @@
 //!
 //! elevated-command - Run command using `sudo`, prompting the user with a graphical OS dialog if necessary
 use std::convert::From;
-use std::process::Command as StdCommand;
+use std::process::{Command as StdCommand, Stdio};
 
 /// Wrap of std::process::command and escalate privileges while executing
 pub struct Command {
@@ -16,6 +16,9 @@ pub struct Command {
     icon: Option<Vec<u8>>,
     #[allow(dead_code)]
     name: Option<String>,
+    stdin: Option<Stdio>,
+    stdout: Option<Stdio>,
+    stderr: Option<Stdio>,
 }
 
 /// Command initialization shares the same logic across all the platforms
@@ -64,6 +67,9 @@ impl Command {
             cmd,
             icon: None,
             name: None,
+            stdin: None,
+            stdout: None,
+            stderr: None,
         }
     }
 
@@ -173,6 +179,9 @@ impl From<StdCommand> for Command {
             cmd,
             icon: None,
             name: None,
+            stdin: None,
+            stdout: None,
+            stderr: None,
         }
     }
 }

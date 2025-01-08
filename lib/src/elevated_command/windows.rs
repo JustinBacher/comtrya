@@ -4,36 +4,71 @@
  *--------------------------------------------------------------------------------------------*/
 
 use super::Command;
+
 use anyhow::Result;
-use std::ffi::OsString;
-use std::io::{BufRead, BufReader};
-use std::mem;
-use std::os::windows::ffi::{OsStrExt as _, OsStringExt};
-use std::os::windows::io::FromRawHandle;
-use std::os::windows::process::ExitStatusExt;
-use std::process::{Child, Command as StdCommand, ExitStatus, Output, Stdio};
-use std::{mem, thread};
-use winapi::shared::minwindef::{DWORD, LPVOID};
-use winapi::um::processthreadsapi::{GetCurrentProcess, OpenProcessToken};
-use winapi::um::securitybaseapi::GetTokenInformation;
-use winapi::um::winnt::{TokenElevation, HANDLE, TOKEN_ELEVATION, TOKEN_QUERY};
-use windows::core::{w, HSTRING, PCWSTR};
-use windows::Win32::Foundation::{GetLastError, HANDLE as FHANDLE, HWND};
-use windows::Win32::Security::SECURITY_ATTRIBUTES;
-use windows::Win32::Storage::FileSystem::PIPE_ACCESS_DUPLEX;
-use windows::Win32::System::Pipes::{
-    CreateNamedPipeW, PIPE_READMODE_BYTE, PIPE_TYPE_BYTE, PIPE_WAIT,
+use which::which;
+
+use std::{
+    fs::File,
+    ffi::{OsStr, OsString},
+    io::BufReader,
+    os::windows::{ffi::OsStrExt, io::FromRawHandle},
+    process::{Output, Stdio},
+    mem,
 };
-use windows::Win32::System::Threading::{
-    CreateProcessW, WaitForSingleObject, INFINITE, PROCESS_CREATION_FLAGS, PROCESS_INFORMATION,
-    STARTF_USESTDHANDLES, STARTUPINFOW,
+use winapi::{
+    shared::minwindef::{DWORD, LPVOID},
+    um::{
+        processthreadsapi::{GetCurrentProcess, OpenProcessToken},
+        securitybaseapi::GetTokenInformation,
+        winnt::{TokenElevation, HANDLE, TOKEN_ELEVATION, TOKEN_QUERY},
+    }
 };
-use windows::Win32::UI::Shell::ShellExecuteW;
-use windows::Win32::UI::Shell::{
-    ShellExecuteExW, ShellExecuteW, SEE_MASK_NOCLOSEPROCESS, SEE_MASK_UNICODE, SHELLEXECUTEINFOW,
+use windows::{
+    core::{w, PCWSTR},
+    Win32::{
+        Security::SECURITY_ATTRIBUTES,
+        Storage::FileSystem::PIPE_ACCESS_DUPLEX,
+        System::{
+            Pipes::{
+                CreateNamedPipeW, PIPE_READMODE_BYTE,
+                PIPE_TYPE_BYTE, PIPE_WAIT,
+            },
+            Threading::{
+                WaitForSingleObject, INFINITE, STARTUPINFOW,
+            },
+        },
+        UI::{
+            Shell::{
+                ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS,
+                SEE_MASK_UNICODE, SHELLEXECUTEINFOW,
+            },
+            WindowsAndMessaging::SW_HIDE
+        }
+    },
 };
-use windows::Win32::UI::WindowsAndMessaging::SW_HIDE;
-use windows::Win32::UI::WindowsAndMessaging::SW_NORMAL;
+
+pub struct Child {
+    pub stdin: Option<File>,
+    pub stdout: Option<BufReader<File>>,
+    pub stderr: Option<BufReader<File>>,
+}
+
+pub struct ChildStdWriter(File);
+
+impl ChildStdWriter {
+    pub fn take(self) -> File {
+        self.0
+    }
+}
+
+pub struct ChildStdReader(BufReader<File>);
+
+impl ChildStdReader {
+    pub fn take(self) -> BufReader<File> {
+        self.0
+    }
+}
 
 /// The implementation of state check and elevated executing varies on each platform
 impl Command {
@@ -100,44 +135,140 @@ impl Command {
     /// ```
     pub fn output(&mut self) -> Result<Output> {
         self.spawn()?;
+        // TODO: actually provide output parody of std Command
         Ok(self.cmd.output()?)
     }
 
+    // Unfortunately this is the only way to elevate a sub-process on
+    // windows while still being able to pipe the stdin/out/err in realtime
     pub fn spawn(&self) -> Result<Child> {
-        let args = self
-            .cmd
-            .get_args()
-            .map(|c| c.to_str().unwrap().to_string())
-            .collect::<Vec<String>>();
+        let mut startup_information = STARTUPINFOW::default();
+        startup_information.cb = size_of::<STARTUPINFOW>() as u32;
 
-        let stdout_file = NamedTempFile::new()?;
-        let stderr_file = NamedTempFile::new()?;
-
-        let stdout_path = stdout_file.path().to_string_lossy().to_string();
-        let stderr_path = stderr_file.path().to_string_lossy().to_string();
-
-        let mut parameters = format!(" > \"{}\" 2> \"{}\"", stdout_path, stderr_path);
-        if !args.is_empty() {
-            parameters = format!(" {} {}", args.join(" "), parameters);
-        }
-
-        // according to https://stackoverflow.com/a/38034535
-        // the cwd always point to %SystemRoot%\System32 and cannot be changed by settting lpdirectory param
-        let r = unsafe {
-            ShellExecuteW(
-                HWND(0),
-                w!("runas"),
-                &HSTRING::from(self.cmd.get_program()),
-                &HSTRING::from(parameters),
-                PCWSTR::null(),
-                SW_HIDE,
-            )
+        let security_attributes = SECURITY_ATTRIBUTES {
+            nLength: std::mem::size_of::<SECURITY_ATTRIBUTES>() as u32,
+            bInheritHandle: true.into(),
+            lpSecurityDescriptor: std::ptr::null_mut(),
         };
 
-        Ok(Output {
-            status: ExitStatus::from_raw(r.0 as u32),
-            stdout: Vec::<u8>::new(),
-            stderr: Vec::<u8>::new(),
+        let args = format!(
+            "{}",
+            self.cmd
+                .get_args()
+                .map(|a| a.to_str().unwrap().to_string())
+                .collect::<Vec<String>>().join(" ")
+        );
+
+        let stdin_pipe = unsafe { CreateNamedPipeW(
+            w!(r"\\.\pipe\elevated_stdin"),
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+            1,
+            4096,
+            4096,
+            0,
+            Some(&security_attributes),
+         )};
+
+        let stdout_pipe = unsafe { CreateNamedPipeW(
+            w!(r"\\.\pipe\elevated_stdout"),
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+            1,
+            4096,
+            4096,
+            0,
+            Some(&security_attributes),
+        )};
+
+        let stderr_pipe = unsafe { CreateNamedPipeW(
+            w!(r"\\.\pipe\elevated_stderr"),
+            PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+            1,
+            4096,
+            4096,
+            0,
+            Some(&security_attributes),
+        )};
+        
+        let args = format!("{} < \\\\.\\pipe\\elevated_stdin > \\\\.\\pipe\\elevated_stdout 2> \\\\.\\pipe\\elevated_stderr", args);
+        let args_wide: Vec<u16> = OsString::from(args).encode_wide().chain(Some(0)).collect();
+
+
+        let program = which(self.cmd.get_program())?
+            .to_string_lossy()
+            .to_string();
+        
+        let program_wide: Vec<u16> = OsString::from(program)
+        .encode_wide()
+        .chain(Some(0))
+        .collect();
+
+        let mut shell_info = SHELLEXECUTEINFOW {
+            cbSize: mem::size_of::<SHELLEXECUTEINFOW>() as u32,
+            fMask: SEE_MASK_NOCLOSEPROCESS | SEE_MASK_UNICODE,
+            lpVerb: w!("runas"),
+            lpFile: PCWSTR(program_wide.as_ptr()),
+            lpParameters: PCWSTR(args_wide.as_ptr()), 
+            nShow: SW_HIDE.0,
+            ..Default::default()
+        };
+        
+        let _success = unsafe { ShellExecuteExW(&mut shell_info) }?;
+        
+        let stdin_writer = unsafe { std::fs::File::from_raw_handle(stdin_pipe.0 as *mut _) };
+        let stdout_reader = BufReader::new(
+            unsafe { File::from_raw_handle(stdout_pipe.0 as *mut _) }
+        );
+        let stderr_reader = BufReader::new(
+            unsafe { File::from_raw_handle(stderr_pipe.0 as *mut _) }
+        );
+        
+        // let mut stdout_lines = stdout_reader.lines();
+        // let mut stderr_lines = stderr_reader.lines();
+        //
+        // thread::spawn(move || {
+        //     loop {
+        //         match (stdout_lines.next(), stderr_lines.next()) {
+        //             (None, None) => break,
+        //             (Some(Ok(line)), _) => println!("stdout: {}", line),
+        //             (_, Some(Ok(line))) => println!("stderr: {}", line),
+        //             (Some(Ok(out_line)), Some(Ok(err_line))) => {
+        //                 println!("stdout: {}", out_line);
+        //                 println!("stderr: {}", err_line);
+        //             },
+        //             _ => continue,
+        //         }
+        //     }
+        // });
+
+        unsafe { WaitForSingleObject(shell_info.hProcess, INFINITE) };
+
+        Ok(Child {
+            stdin: Some(stdin_writer),
+            stdout: Some(stdout_reader),
+            stderr: Some(stderr_reader),
         })
+    }
+
+    pub fn arg<S: AsRef<OsStr>>(&mut self, arg: S) -> &mut Command {
+        self.cmd.arg(arg.as_ref());
+        self
+    }
+
+    pub fn stdin<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Command {
+        self.stdin = Some(cfg.into());
+        self
+    }
+
+    pub fn stdout<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Command {
+        self.stdout = Some(cfg.into());
+        self
+    }
+
+    pub fn stderr<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Command {
+        self.stderr = Some(cfg.into());
+        self
     }
 }
