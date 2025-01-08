@@ -532,6 +532,7 @@ version = "0.9.1"
 dependencies = [
  "age",
  "anyhow",
+ "base64 0.21.7",
  "dirs-next",
  "elevated-command",
  "file-owner",
@@ -541,6 +542,7 @@ dependencies = [
  "gix",
  "gix-protocol",
  "ignore",
+ "libc",
  "normpath",
  "octocrab",
  "os_info",
@@ -567,6 +569,8 @@ dependencies = [
  "walkdir",
  "which",
  "whoami",
+ "winapi",
+ "windows",
 ]
 
 [[package]]
