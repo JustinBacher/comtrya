@@ -6,8 +6,13 @@
 //! [![docs.rs](https://docs.rs/elevated-command/badge.svg)](https://docs.rs/elevated-command)
 //!
 //! elevated-command - Run command using `sudo`, prompting the user with a graphical OS dialog if necessary
+use anyhow::anyhow;
 use std::convert::From;
+use std::env;
+use std::ffi::OsStr;
 use std::process::{Command as StdCommand, Stdio};
+use tracing::debug;
+use which::which;
 
 /// Wrap of std::process::command and escalate privileges while executing
 pub struct Command {
@@ -175,14 +180,45 @@ impl From<StdCommand> for Command {
     ///
     /// It is similiar with the construct method
     fn from(cmd: StdCommand) -> Self {
-        Self {
-            cmd,
-            icon: None,
-            name: None,
-            stdin: None,
-            stdout: None,
-            stderr: None,
+        let pkexec = which("pkexec").unwrap();
+        let mut command = StdCommand::new(pkexec);
+        let display = env::var("DISPLAY");
+        let xauthority = env::var("XAUTHORITY");
+        let home = env::var("HOME");
+
+        debug!("Setting command up for escalation");
+
+        command.arg("--disable-internal-agent");
+        if display.is_ok() || xauthority.is_ok() || home.is_ok() {
+            command.arg("env");
+            if let Ok(display) = display {
+                command.arg(format!("DISPLAY={}", display));
+            }
+            if let Ok(xauthority) = xauthority {
+                command.arg(format!("XAUTHORITY={}", xauthority));
+            }
+            if let Ok(home) = home {
+                command.arg(format!("HOME={}", home));
+            }
+        } else if cmd.get_envs().any(|(_, v)| v.is_some()) {
+            command.arg("env");
         }
+        for (k, v) in cmd.get_envs() {
+            if let Some(value) = v {
+                command.arg(format!(
+                    "{}={}",
+                    k.to_str().ok_or(anyhow!("invalid key")).unwrap(),
+                    value.to_str().ok_or(anyhow!("invalid value")).unwrap()
+                ));
+            }
+        }
+
+        command.arg(cmd.get_program());
+        let args: Vec<&OsStr> = cmd.get_args().collect();
+        if !args.is_empty() {
+            command.args(args);
+        }
+        Self::new(command)
     }
 }
 
@@ -192,3 +228,8 @@ mod linux;
 mod macos;
 #[cfg(target_os = "windows")]
 mod windows;
+
+#[cfg(unix)]
+pub use std::process::Child;
+#[cfg(target_os = "windows")]
+pub use windows::Child;

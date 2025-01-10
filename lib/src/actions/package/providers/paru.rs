@@ -154,6 +154,7 @@ impl PackageProvider for Paru {
                         package.packages(),
                     ]
                     .concat(),
+                    privileged: true,
                     ..Default::default()
                 }),
                 initializers: vec![],

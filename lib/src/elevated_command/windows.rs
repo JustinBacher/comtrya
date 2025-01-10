@@ -9,12 +9,12 @@ use anyhow::Result;
 use which::which;
 
 use std::{
-    fs::File,
     ffi::{OsStr, OsString},
+    fs::File,
     io::BufReader,
+    mem,
     os::windows::{ffi::OsStrExt, io::FromRawHandle},
     process::{Output, Stdio},
-    mem,
 };
 use winapi::{
     shared::minwindef::{DWORD, LPVOID},
@@ -22,7 +22,7 @@ use winapi::{
         processthreadsapi::{GetCurrentProcess, OpenProcessToken},
         securitybaseapi::GetTokenInformation,
         winnt::{TokenElevation, HANDLE, TOKEN_ELEVATION, TOKEN_QUERY},
-    }
+    },
 };
 use windows::{
     core::{w, PCWSTR},
@@ -30,21 +30,15 @@ use windows::{
         Security::SECURITY_ATTRIBUTES,
         Storage::FileSystem::PIPE_ACCESS_DUPLEX,
         System::{
-            Pipes::{
-                CreateNamedPipeW, PIPE_READMODE_BYTE,
-                PIPE_TYPE_BYTE, PIPE_WAIT,
-            },
-            Threading::{
-                WaitForSingleObject, INFINITE, STARTUPINFOW,
-            },
+            Pipes::{CreateNamedPipeW, PIPE_READMODE_BYTE, PIPE_TYPE_BYTE, PIPE_WAIT},
+            Threading::{WaitForSingleObject, INFINITE, STARTUPINFOW},
         },
         UI::{
             Shell::{
-                ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS,
-                SEE_MASK_UNICODE, SHELLEXECUTEINFOW,
+                ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS, SEE_MASK_UNICODE, SHELLEXECUTEINFOW,
             },
-            WindowsAndMessaging::SW_HIDE
-        }
+            WindowsAndMessaging::SW_HIDE,
+        },
     },
 };
 
@@ -156,75 +150,77 @@ impl Command {
             self.cmd
                 .get_args()
                 .map(|a| a.to_str().unwrap().to_string())
-                .collect::<Vec<String>>().join(" ")
+                .collect::<Vec<String>>()
+                .join(" ")
         );
 
-        let stdin_pipe = unsafe { CreateNamedPipeW(
-            w!(r"\\.\pipe\elevated_stdin"),
-            PIPE_ACCESS_DUPLEX,
-            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-            1,
-            4096,
-            4096,
-            0,
-            Some(&security_attributes),
-         )};
+        let stdin_pipe = unsafe {
+            CreateNamedPipeW(
+                w!(r"\\.\pipe\elevated_stdin"),
+                PIPE_ACCESS_DUPLEX,
+                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                1,
+                4096,
+                4096,
+                0,
+                Some(&security_attributes),
+            )
+        };
 
-        let stdout_pipe = unsafe { CreateNamedPipeW(
-            w!(r"\\.\pipe\elevated_stdout"),
-            PIPE_ACCESS_DUPLEX,
-            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-            1,
-            4096,
-            4096,
-            0,
-            Some(&security_attributes),
-        )};
+        let stdout_pipe = unsafe {
+            CreateNamedPipeW(
+                w!(r"\\.\pipe\elevated_stdout"),
+                PIPE_ACCESS_DUPLEX,
+                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                1,
+                4096,
+                4096,
+                0,
+                Some(&security_attributes),
+            )
+        };
 
-        let stderr_pipe = unsafe { CreateNamedPipeW(
-            w!(r"\\.\pipe\elevated_stderr"),
-            PIPE_ACCESS_DUPLEX,
-            PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-            1,
-            4096,
-            4096,
-            0,
-            Some(&security_attributes),
-        )};
-        
+        let stderr_pipe = unsafe {
+            CreateNamedPipeW(
+                w!(r"\\.\pipe\elevated_stderr"),
+                PIPE_ACCESS_DUPLEX,
+                PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                1,
+                4096,
+                4096,
+                0,
+                Some(&security_attributes),
+            )
+        };
+
         let args = format!("{} < \\\\.\\pipe\\elevated_stdin > \\\\.\\pipe\\elevated_stdout 2> \\\\.\\pipe\\elevated_stderr", args);
         let args_wide: Vec<u16> = OsString::from(args).encode_wide().chain(Some(0)).collect();
 
+        let program = which(self.cmd.get_program())?.to_string_lossy().to_string();
 
-        let program = which(self.cmd.get_program())?
-            .to_string_lossy()
-            .to_string();
-        
         let program_wide: Vec<u16> = OsString::from(program)
-        .encode_wide()
-        .chain(Some(0))
-        .collect();
+            .encode_wide()
+            .chain(Some(0))
+            .collect();
 
         let mut shell_info = SHELLEXECUTEINFOW {
             cbSize: mem::size_of::<SHELLEXECUTEINFOW>() as u32,
             fMask: SEE_MASK_NOCLOSEPROCESS | SEE_MASK_UNICODE,
             lpVerb: w!("runas"),
             lpFile: PCWSTR(program_wide.as_ptr()),
-            lpParameters: PCWSTR(args_wide.as_ptr()), 
+            lpParameters: PCWSTR(args_wide.as_ptr()),
             nShow: SW_HIDE.0,
             ..Default::default()
         };
-        
+
         let _success = unsafe { ShellExecuteExW(&mut shell_info) }?;
-        
+
         let stdin_writer = unsafe { std::fs::File::from_raw_handle(stdin_pipe.0 as *mut _) };
-        let stdout_reader = BufReader::new(
-            unsafe { File::from_raw_handle(stdout_pipe.0 as *mut _) }
-        );
-        let stderr_reader = BufReader::new(
-            unsafe { File::from_raw_handle(stderr_pipe.0 as *mut _) }
-        );
-        
+        let stdout_reader =
+            BufReader::new(unsafe { File::from_raw_handle(stdout_pipe.0 as *mut _) });
+        let stderr_reader =
+            BufReader::new(unsafe { File::from_raw_handle(stderr_pipe.0 as *mut _) });
+
         // let mut stdout_lines = stdout_reader.lines();
         // let mut stderr_lines = stderr_reader.lines();
         //

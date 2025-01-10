@@ -7,9 +7,9 @@ use super::Command;
 use anyhow::{anyhow, Result};
 use std::env;
 use std::ffi::OsStr;
-use std::path::PathBuf;
 use std::process::{Child, Command as StdCommand, Output, Stdio};
-use std::str::FromStr;
+use tracing::debug;
+use which::which;
 
 /// The implementation of state check and elevated executing varies on each platform
 impl Command {
@@ -52,45 +52,24 @@ impl Command {
         Ok(self.cmd.output()?)
     }
 
-    pub fn spawn(&self) -> Result<Child> {
-        let pkexec = PathBuf::from_str("/bin/pkexec")?;
-        let mut command = StdCommand::new(pkexec);
-        let display = env::var("DISPLAY");
-        let xauthority = env::var("XAUTHORITY");
-        let home = env::var("HOME");
+    pub fn spawn(&mut self) -> Result<Child> {
+        tracing::debug!(
+            "Command: {} {}",
+            &self.cmd.get_program().to_string_lossy(),
+            &self
+                .cmd
+                .get_args()
+                .map(|a| a.to_string_lossy().to_string())
+                .collect::<Vec<String>>()
+                .join(" ")
+        );
 
-        command.arg("--disable-internal-agent");
-        if display.is_ok() || xauthority.is_ok() || home.is_ok() {
-            command.arg("env");
-            if let Ok(display) = display {
-                command.arg(format!("DISPLAY={}", display));
-            }
-            if let Ok(xauthority) = xauthority {
-                command.arg(format!("XAUTHORITY={}", xauthority));
-            }
-            if let Ok(home) = home {
-                command.arg(format!("HOME={}", home));
-            }
-        } else if self.cmd.get_envs().any(|(_, v)| v.is_some()) {
-            command.arg("env");
-        }
-        for (k, v) in self.cmd.get_envs() {
-            if let Some(value) = v {
-                command.arg(format!(
-                    "{}={}",
-                    k.to_str().ok_or(anyhow!("invalid key"))?,
-                    value.to_str().ok_or(anyhow!("invalid value"))?
-                ));
-            }
-        }
+        let Ok(child) = self.cmd.spawn() else {
+            debug!("Failed to spawn command inner");
+            return Err(anyhow!("Failed to spawn command inner"));
+        };
 
-        command.arg(self.cmd.get_program());
-        let args: Vec<&OsStr> = self.cmd.get_args().collect();
-        if !args.is_empty() {
-            command.args(args);
-        }
-
-        Ok(command.spawn()?)
+        Ok(child)
     }
 
     pub fn arg<S: AsRef<OsStr>>(&mut self, arg: S) -> &mut Command {

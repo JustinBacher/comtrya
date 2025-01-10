@@ -39,6 +39,7 @@ use tracing_subscriber::{fmt::writer::MakeWriterExt, layer::SubscriberExt, FmtSu
 mod commands;
 mod config;
 use config::Config;
+use update_informer::registry;
 
 #[derive(Debug)]
 pub struct Runtime {
@@ -71,6 +72,8 @@ pub fn get_child_msgs(state: &ProgressState, w: &mut dyn std::fmt::Write) {
 }
 
 fn configure_tracing(args: &GlobalArgs) {
+    let stderr_writer = IndicatifLayer::<tracing_subscriber::Registry>::new().get_stderr_writer();
+
     let indicatif_layer = IndicatifLayer::new()
         .with_progress_style(
             ProgressStyle::with_template(
@@ -80,24 +83,33 @@ fn configure_tracing(args: &GlobalArgs) {
         )
         .with_span_field_formatter(hide_indicatif_span_fields(DefaultFields::new()));
 
-    tracing_subscriber::registry()
-        //.with(
-        //    tracing_subscriber::fmt::layer()
-        //        .compact()
-        //        .with_ansi(true)
-        //        .with_line_number(false)
-        //        .with_thread_names(false)
-        //        .with_target(false)
-        //        .with_file(false)
-        //        .with_writer(indicatif_layer.get_stderr_writer())
-        //        .with_filter(LevelFilter::from_level(Level::INFO)),
-        //)
-        .with(
-            indicatif_layer
-                .with_filter(IndicatifFilter::new(true))
-                .with_filter(LevelFilter::from_level(Level::DEBUG)),
-        )
-        .init();
+    let registry = tracing_subscriber::registry().with(
+        indicatif_layer
+            .with_filter(IndicatifFilter::new(true))
+            .with_filter(LevelFilter::from_level(Level::DEBUG)),
+    );
+
+    if args.verbose > 0 {
+        registry
+            .with(
+                tracing_subscriber::fmt::layer()
+                    .compact()
+                    .with_ansi(true)
+                    .with_line_number(false)
+                    .with_thread_names(false)
+                    .with_target(false)
+                    .with_file(false)
+                    .with_writer(stderr_writer)
+                    .with_filter(LevelFilter::from_level(match args.verbose {
+                        1 => Level::DEBUG,
+                        2 => Level::ERROR,
+                        _ => Level::TRACE,
+                    })),
+            )
+            .init();
+    } else {
+        registry.init();
+    }
 }
 
 fn main() -> anyhow::Result<()> {

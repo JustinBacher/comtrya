@@ -1,15 +1,14 @@
 use crate::atoms::Outcome;
 
-use std::borrow::BorrowMut;
 use std::io::{BufRead, BufReader};
-use std::ops::Deref;
-use std::process::{Child, Command};
+use std::process::{Command, Stdio};
+use std::thread;
 
 use super::super::Atom;
+use crate::elevated_command::{Child, Command as ElevatedCommand};
 use crate::utilities;
-use anyhow::{anyhow, Result};
-use elevated_command::Command as ElevatedCommand;
-use tracing::{debug, debug_span, info, span, Level};
+use anyhow::{anyhow, Context, Result};
+use tracing::{debug, debug_span, error, info, span, trace, warn, Level};
 use tracing_indicatif::{span_ext::IndicatifSpanExt, suspend_tracing_indicatif};
 
 #[derive(Default)]
@@ -38,7 +37,19 @@ pub fn new_run_command(command: String) -> Exec {
     }
 }
 
+fn classify_and_log_message(line: &str) {
+    let little_line = line.to_ascii_lowercase();
+    if little_line.contains("error") {
+        error!("{}", line);
+    } else if little_line.contains("warn") {
+        warn!("{}", line);
+    } else {
+        info!("{}", line);
+    }
+}
+
 impl Exec {
+    #[allow(dead_code)]
     fn elevate_if_required(&self) -> (String, Vec<String>) {
         // Depending on the priviledged flag and who who the current user is
         // we can determine if we need to prepend sudo to the command
@@ -60,47 +71,47 @@ impl Exec {
         }
     }
 
-    fn elevate(&mut self) -> anyhow::Result<()> {
-        tracing::debug!(
-            "Privilege elevation required to run `{} {}`. Validating privileges ...",
-            &self.command,
-            &self.arguments.join(" ")
-        );
+    fn start_command(&mut self) -> Result<Child> {
+        let cmd = utilities::get_binary_path(&self.command)
+            .map_err(|_| anyhow!("Command `{}` not found in path", self.command))?;
 
-        let privilege_provider = utilities::get_binary_path(&self.privilege_provider)?;
+        let mut command = Command::new(&cmd);
+        command
+            .envs(self.environment.clone())
+            .args(&self.arguments)
+            .current_dir(self.working_dir.clone().unwrap_or_else(|| {
+                std::env::current_dir()
+                    .map(|current_dir| current_dir.display().to_string())
+                    .expect("Failed to get current directory")
+            }));
 
-        let _span = debug_span!("priviledge escalation").entered();
-
-        suspend_tracing_indicatif(|| {
-            let mut command = std::process::Command::new(privilege_provider)
-                .stdin(std::process::Stdio::inherit())
-                .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::inherit())
-                .arg("--validate")
-                .spawn()?;
-
-            if let Some(stdout) = command.stdout.take() {
-                let reader = BufReader::new(stdout);
-                for line in reader.lines() {
-                    let line = line?;
-                    debug!("{}", line);
+        let child = match self.privileged {
+            true => match self.elevate(command) {
+                Ok(mut cmd) => cmd.stdout(Stdio::piped()).stderr(Stdio::piped()).spawn(),
+                Err(e) => {
+                    debug!("Unable to spawn command. {e}");
+                    Err(anyhow!(e))
                 }
-            }
+            },
+            false => command
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .map_err(|e| {
+                    debug!("Unable to spawn command. {e}");
+                    anyhow!("{e}")
+                }),
+        };
 
-            match command.wait_with_output() {
-                Ok(std::process::Output { status, .. }) if status.success() => Ok(()),
+        debug!("Child: {child:?}");
+        child
+    }
 
-                Ok(std::process::Output { stderr, .. }) => Err(anyhow!(
-                    "Command requires privilege escalation, but couldn't elevate privileges: {}",
-                    String::from_utf8(stderr)?
-                )),
-
-                Err(err) => Err(anyhow!(
-                    "Command requires privilege escalation, but couldn't elevate privileges: {}",
-                    err
-                )),
-            }
-        })
+    fn elevate(&mut self, cmd: Command) -> Result<ElevatedCommand> {
+        let mut cmd = ElevatedCommand::from(cmd);
+        cmd.stdout(Stdio::piped());
+        cmd.stderr(Stdio::piped());
+        Ok(cmd)
     }
 }
 
@@ -134,100 +145,44 @@ impl Atom for Exec {
         let span = debug_span!("package.install", provider = self.command);
         span.pb_start();
 
-        let (command, arguments) = self.elevate_if_required();
-        let command = utilities::get_binary_path(&command)
-            .map_err(|_| anyhow!("Command `{}` not found in path", command))?;
+        let mut child = self.start_command()?;
+        debug!("Id: {}", child.id());
+        let stdout = child.stdout.take().context("Failed to capture stdout")?;
+        let stderr = child.stderr.take().context("Failed to capture stderr")?;
 
-        // If we require root, we need to use sudo with inherited IO
-        // to ensure the user can respond if prompted for a password
-        if command.eq("doas") || command.eq("sudo") || command.eq("run0") {
-            match self.elevate() {
-                Ok(_) => (),
-                Err(err) => {
-                    return Err(anyhow!(err));
+        debug!("Spawned command");
+
+        debug!("Spawning read thread");
+        let out_handle = thread::spawn(move || {
+            for line in BufReader::new(stdout).lines() {
+                match line {
+                    Err(e) => {
+                        error!("{}", e);
+                    }
+                    Ok(line) => {
+                        classify_and_log_message(&line);
+                    }
                 }
             }
-        }
+        });
 
-        let mut process = Command::new(&command)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .envs(self.environment.clone())
-            .args(&arguments)
-            .current_dir(self.working_dir.clone().unwrap_or_else(|| {
-                std::env::current_dir()
-                    .map(|current_dir| current_dir.display().to_string())
-                    .expect("Failed to get current directory")
-            }));
-        let child = process.spawn();
-
-        let mut command = match child {
-            Ok(cmd) => cmd,
-            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => {
-                let c = Command::new(&command)
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .envs(self.environment.clone())
-                    .args(&arguments)
-                    .current_dir(self.working_dir.clone().unwrap_or_else(|| {
-                        std::env::current_dir()
-                            .map(|current_dir| current_dir.display().to_string())
-                            .expect("Failed to get current directory")
-                    }));
-                let mut elevated = ElevatedCommand::new(*c).into_inner();
-                elevated.spawn()?
-            }
-            Err(e) => {
-                return Err(anyhow!("Error running command: {e}"));
-            }
-        };
-
-        let stdout = command.stdout.take().expect("Failed to capture stdout");
-        let stderr = command.stderr.take().expect("Failed to capture stderr");
-
-        let mut stdout_reader = BufReader::new(stdout).lines();
-        let mut stderr_reader = BufReader::new(stderr).lines();
-
-        loop {
-            match (stdout_reader.next(), stderr_reader.next()) {
-                // TODO: Color code stderr
-                (Some(Ok(out_line)), Some(Ok(err_line))) => {
-                    span.pb_set_message(&format!("{out_line:?}"));
-                    span.pb_set_message(&format!("{err_line:?}"));
+        let err_handle = thread::spawn(move || {
+            for line in BufReader::new(stderr).lines() {
+                match line {
+                    Err(e) => {
+                        error!("{}", e);
+                    }
+                    Ok(line) => {
+                        classify_and_log_message(&line);
+                    }
                 }
-                (Some(Ok(line)), _) => span.pb_set_message(&format!("{line:?}")),
-                (_, Some(Ok(line))) => span.pb_set_message(&format!("{line:?}")),
-                (None, None) => break,
-                _ => continue,
             }
-        }
+        });
 
-        match command.wait_with_output() {
-            Ok(output) if output.status.success() => {
-                self.status.stdout = String::from_utf8(output.stdout)?;
-                self.status.stderr = String::from_utf8(output.stderr)?;
+        out_handle.join().ok();
+        err_handle.join().ok();
 
-                debug!("stdout: {}", &self.status.stdout);
-
-                Ok(())
-            }
-
-            Ok(output) => {
-                self.status.stdout = String::from_utf8(output.stdout)?;
-                self.status.stderr = String::from_utf8(output.stderr)?;
-
-                debug!("exit code: {}", &self.status.code);
-                debug!("stdout: {}", &self.status.stdout);
-                debug!("stderr: {}", &self.status.stderr);
-
-                Err(anyhow!(
-                    "Command failed with exit code: {}",
-                    output.status.code().unwrap_or(1)
-                ))
-            }
-
-            Err(err) => Err(anyhow!(err)),
-        }
+        Ok(())
     }
 
     fn output_string(&self) -> String {
