@@ -16,7 +16,12 @@ pub struct BinaryGitHub {
     pub name: String,
     pub directory: String,
     pub repository: String,
-    pub version: Option<String>,
+    #[serde(default = "latest", alias = "tag")]
+    pub version: String,
+}
+
+fn latest() -> String {
+    "latest".to_string()
 }
 
 struct GitHubAsset {
@@ -57,10 +62,10 @@ impl Action for BinaryGitHub {
         let repos = octocrab.repos(owner, repo);
         let releases = repos.releases();
 
-        let result = match &self.version {
-            Some(version) => async_runtime.block_on(releases.get_by_tag(version.as_str())),
-            None => async_runtime.block_on(releases.get_latest()),
-        };
+        let result = match &self.version.as_str() {
+            "latest" => async_runtime.block_on(releases.get_latest()),
+            _ => async_runtime.block_on(releases.get_by_tag(version.as_str())),
+        };        
 
         let release = match result {
             Ok(release) => release,
