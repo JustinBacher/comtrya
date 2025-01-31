@@ -1,19 +1,19 @@
 use std::{process::Stdio, sync::Arc};
 
 use anyhow::{anyhow, Result};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+    process::Command,
+    sync::RwLock,
+    task::JoinSet,
+    time::{sleep, Duration},
+};
 use tracing::{debug, error, trace};
 
 use super::super::Atom;
 use crate::atoms::Outcome;
 use crate::utilities;
 use crate::utilities::password_manager::PasswordManager;
-use tokio::process::Command;
-use tokio::{
-    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
-    sync::RwLock,
-    task::JoinSet,
-    time::{sleep, Duration},
-};
 
 #[derive(Default)]
 pub struct Exec {
@@ -96,11 +96,12 @@ impl Atom for Exec {
         let (elevated, command, mut arguments) = self.elevate_if_required();
 
         let command = utilities::get_binary_path(&command)
-            .map_err(|_| anyhow!("Command `{}` not found in path", command))?;
+            .map_err(|_| anyhow!("Command `{command}` not found in path"))?;
 
         // If we require root, we need to use sudo with inherited IO
         // to ensure the user can respond if prompted for a password
-        if elevated && command.eq("sudo") {
+
+        if elevated && command.eq("echo") {
             arguments.insert(0, String::from("-S"));
         }
 
