@@ -6,6 +6,7 @@ mod git;
 mod group;
 mod macos;
 mod package;
+mod plugin;
 mod user;
 
 use crate::manifests::Manifest;
@@ -25,6 +26,7 @@ use git::GitClone;
 use group::add::GroupAdd;
 use macos::MacOSDefault;
 use package::{PackageInstall, PackageRepository};
+use plugin::plugin::Plugin;
 use rhai::Engine;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -158,6 +160,9 @@ pub enum Actions {
 
     #[serde(rename = "user.group")]
     UserAddGroup(ConditionalVariantAction<UserAddGroup>),
+
+    #[serde(untagged)]
+    Plugin(ConditionalVariantAction<Plugin>),
 }
 
 impl Actions {
@@ -181,42 +186,7 @@ impl Actions {
             Self::UserAddGroup(a) => a,
             Self::FileRemove(a) => a,
             Self::DirectoryRemove(a) => a,
-        }
-    }
-
-    pub fn is_privileged(&self) -> bool {
-        self.inner_ref().is_privileged()
-    }
-
-    pub async fn execute(
-        &self,
-        dry_run: bool,
-        manifest: &Manifest,
-        contexts: &Contexts,
-        pm: Option<PasswordManager>,
-    ) -> anyhow::Result<()> {
-        // Need this to ensure if execute is called on an action with it's own
-        // implementaion of execute, it uses that implementation instead of default.
-        // for some reason the dyn lookup doesn't resolve correctly.
-        match self {
-            Self::BinaryGitHub(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::CommandRun(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::DirectoryCopy(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::DirectoryCreate(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::FileCopy(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::FileChown(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::FileDownload(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::FileLink(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::FileUnarchive(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::GitClone(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::GroupAdd(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::MacOSDefault(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::PackageInstall(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::PackageRepository(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::UserAdd(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::UserAddGroup(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::FileRemove(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
-            Self::DirectoryRemove(a) => a.execute(dry_run, self, manifest, contexts, pm).await,
+            Self::Plugin(a) => a,
         }
     }
 }
@@ -242,6 +212,7 @@ impl Display for Actions {
             Actions::PackageRepository(_) => "package.repository",
             Actions::UserAdd(_) => "user.add",
             Actions::UserAddGroup(_) => "user.group",
+            Actions::Plugin(_) => "plugin.plugin",
         };
 
         write!(f, "{}", name)

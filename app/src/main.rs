@@ -10,6 +10,8 @@ use comtrya_lib::manifests;
 use clap::Parser;
 use tracing::{error, Level};
 
+use mlua::Lua;
+#[allow(unused_imports)]
 use tracing_subscriber::{fmt::writer::MakeWriterExt, layer::SubscriberExt, FmtSubscriber};
 
 mod commands;
@@ -23,7 +25,7 @@ pub struct Runtime {
     pub(crate) args: GlobalArgs,
     pub(crate) config: Config,
     pub(crate) contexts: Contexts,
-    pub(crate) password_manager: Option<PasswordManager>,
+    pub(crate) lua: Option<Lua>,
 }
 
 pub(crate) async fn execute(runtime: &mut Runtime) -> anyhow::Result<()> {
@@ -82,13 +84,17 @@ async fn main() -> anyhow::Result<()> {
         check_for_updates(args.no_color);
     }
 
+    let lua = dirs_next::config_dir()
+        .map(|path| path.join("plugins"))
+        .and_then(|plugins_dir| plugins_dir.is_dir().then(Lua::new));
+
     // Run Context Providers
     let contexts = build_contexts(&config);
     let mut runtime = Runtime {
         args,
         config,
         contexts,
-        password_manager: None,
+        lua,
     };
 
     execute(&mut runtime).await?;

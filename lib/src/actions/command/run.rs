@@ -14,7 +14,7 @@ pub struct RunCommand {
     #[serde(default)]
     pub args: Vec<String>,
 
-    #[serde(default = "get_false", alias = "sudo")]
+    #[serde(default, alias = "sudo")]
     pub privileged: bool,
 
     #[serde(default = "get_cwd")]
@@ -22,10 +22,6 @@ pub struct RunCommand {
 
     #[serde(default)]
     pub env: HashMap<String, String>,
-}
-
-fn get_false() -> bool {
-    false
 }
 
 fn get_cwd() -> String {

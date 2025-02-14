@@ -153,9 +153,8 @@ pub fn lib_config(args: &GlobalArgs) -> anyhow::Result<Config> {
         }
     };
 
-    let defines_iterator = args.defines.iter();
-    for pair in defines_iterator {
-        config.variables.insert(pair.0.clone(), pair.1.clone());
+    for (key, value) in args.defines.iter().cloned() {
+        config.variables.insert(key, value);
     }
 
     Ok(config)
