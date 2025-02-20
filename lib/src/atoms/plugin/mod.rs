@@ -1,6 +1,3 @@
-use super::Atom;
+pub mod exec;
 
-mod exec;
-mod spec;
-
-pub use exec::PluginExec;
+pub use exec::{PluginExec, PluginSpec};

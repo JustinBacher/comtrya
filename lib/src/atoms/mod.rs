@@ -5,10 +5,15 @@ pub mod git;
 pub mod http;
 pub mod plugin;
 
+use crate::atoms::plugin::PluginSpec;
 use crate::utilities::password_manager::PasswordManager;
 
-pub enum SideEffect {}
+#[derive(Debug)]
+pub enum SideEffect {
+    Plugins(Vec<PluginSpec>),
+}
 
+#[derive(Debug, Default)]
 pub struct Outcome {
     pub side_effects: Vec<SideEffect>,
     pub should_run: bool,

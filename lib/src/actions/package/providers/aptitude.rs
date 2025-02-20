@@ -27,13 +27,9 @@ impl PackageProvider for Aptitude {
     }
 
     fn available(&self) -> bool {
-        match which("apt-add-repository") {
-            Ok(_) => true,
-            Err(_) => {
-                warn!(message = "apt-add-repository not available");
-                false
-            }
-        }
+        which("apt-add-repository")
+            .inspect_err(|_| warn!(message = "apt-add-repository not available"))
+            .is_ok()
     }
 
     fn bootstrap(&self, contexts: &Contexts) -> Vec<Step> {
