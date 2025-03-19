@@ -1,11 +1,10 @@
-use crate::atoms::Outcome;
-
-use super::super::Atom;
-use super::FileAtom;
 use std::path::PathBuf;
 
 #[cfg(unix)]
 use tracing::error;
+
+use super::{super::Atom, FileAtom};
+use crate::atoms::Outcome;
 
 #[derive(Debug)]
 pub struct Chown {
@@ -63,7 +62,7 @@ impl Atom for Chown {
                     side_effects: vec![],
                     should_run: false,
                 });
-            }
+            },
         };
 
         if let (Some(current_owner), Some(current_group)) = (
@@ -81,7 +80,7 @@ impl Atom for Chown {
                         side_effects: vec![],
                         should_run: false,
                     });
-                }
+                },
             };
 
             let requested_group = match uzers::get_group_by_name(self.group.as_str()) {
@@ -96,7 +95,7 @@ impl Atom for Chown {
                         side_effects: vec![],
                         should_run: false,
                     });
-                }
+                },
             };
 
             if current_owner.uid() != requested_owner.uid() {
@@ -153,8 +152,9 @@ impl Atom for Chown {
 #[cfg(test)]
 #[cfg(unix)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_can() {
@@ -176,7 +176,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let file_chown = Chown {

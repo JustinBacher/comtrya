@@ -2,50 +2,50 @@
 name = "comtrya-lib"
 version = "0.9.1"
 authors = ["David McKay <david@rawkode.dev>"]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 description = "Contains the interfaces for comtrya plugins"
 
 [dependencies]
-anyhow = "1.0"
-age = { version = "0.10", features = ["armor"] }
-dirs-next = "2.0"
-file_diff = "1.0"
-gethostname = "0.5"
-ignore = "0.4"
-normpath = "1.2"
-octocrab = "0.41"
-os_info = "3.7"
-petgraph = "0.6"
-rand = "0.8"
-regex = "1.11"
-reqwest = { version = "0.12", default-features = false, features = [
-    "blocking",
-    "rustls-tls",
-] }
-rhai = { version = "1.19", features = ["serde"] }
-schemars = "0.8"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde_yml = "0"
-sha256 = "1.5"
-tokio = "1.41"
-toml = "0.8"
-tera = "1.20"
-tracing = "0.1"
-trust-dns-resolver = "0.23.2"
-walkdir = "2.3"
-which = "7.0"
-whoami = "1.5"
-tar = "0.4.42"
-flate2 = "1.0.34"
-file-owner = "0.1.2"
-gix = { version = "0.68.0", features = ["blocking-http-transport-reqwest-rust-tls", "blocking-network-client"] }
-gix-protocol = "0.46.1"
+age = { workspace = true }
+anyhow = { workspace = true }
+camino = { workspace = true }
+dirs-next = { workspace = true }
+file-owner = { workspace = true }
+file_diff = { workspace = true }
+flate2 = { workspace = true }
+gethostname = { workspace = true }
+gix = { workspace = true }
+ignore = { workspace = true }
+normpath = { workspace = true }
+octocrab = { workspace = true }
+os_info = { workspace = true }
+parking_lot = { workspace = true }
+petgraph = { workspace = true }
+rand = { workspace = true }
+regex = { workspace = true }
+reqwest = { workspace = true }
+rhai = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_with = { workspace = true }
+serde_yml = { workspace = true }
+sha256 = { workspace = true }
+tar = { workspace = true }
+tealr = { workspace = true }
+tera = { workspace = true }
+tokio = { workspace = true }
+toml = { workspace = true }
+tracing = { workspace = true }
+trust-dns-resolver = { workspace = true }
+walkdir = { workspace = true }
+which = { workspace = true }
+whoami = { workspace = true }
 
 [target.'cfg(unix)'.dependencies]
-uzers = "0.12"
+uzers = { workspace = true }
 
 [dev-dependencies]
-tempfile = "3.13"
-pretty_assertions = "1.4"
+pretty_assertions = { workspace = true }
+tempfile = { workspace = true }

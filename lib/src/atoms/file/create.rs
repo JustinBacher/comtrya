@@ -1,8 +1,7 @@
-use crate::atoms::Outcome;
-
-use super::super::Atom;
-use super::FileAtom;
 use std::path::PathBuf;
+
+use super::{super::Atom, FileAtom};
+use crate::atoms::Outcome;
 
 pub struct Create {
     pub path: PathBuf,
@@ -37,8 +36,9 @@ impl Atom for Create {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_can_plan() {
@@ -53,7 +53,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let file_create = Create {
@@ -70,7 +70,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let mut file_create = Create {

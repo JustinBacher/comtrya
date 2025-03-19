@@ -1,15 +1,15 @@
+use std::collections::BTreeMap;
+
 use anyhow::Result;
 use rhai::Scope;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use tracing::{instrument, trace, warn};
 use user::UserContextProvider;
 
-use crate::contexts::privilege::PrivilegeContextProvider;
 use crate::{
     config::Config,
     contexts::{
-        env::EnvContextProvider, os::OSContextProvider,
+        env::EnvContextProvider, os::OSContextProvider, privilege::PrivilegeContextProvider,
         variable_include::VariableIncludeContextProvider, variables::VariablesContextProvider,
     },
     values::Value,
@@ -73,7 +73,7 @@ pub fn build_contexts(config: &Config) -> Contexts {
                         message = ""
                     );
                     values.insert(k.clone(), v.clone());
-                }
+                },
                 Context::ListContext(k, v) => {
                     trace!(
                         context = provider.get_prefix().as_str(),
@@ -83,7 +83,7 @@ pub fn build_contexts(config: &Config) -> Contexts {
                     );
 
                     values.insert(k.clone(), v.clone().into());
-                }
+                },
             });
 
         contexts.insert(provider.get_prefix(), values);
@@ -107,7 +107,7 @@ pub fn to_rhai(context: &Contexts) -> rhai::Scope {
             Ok(dynamic) => dynamic,
             Err(error) => {
                 panic!("Failed to convert context value to dynamic: {}", error);
-            }
+            },
         };
 
         trace!("Add dynamic constant '{}' -> {}", &m, &dynamic);
@@ -120,9 +120,10 @@ pub fn to_rhai(context: &Contexts) -> rhai::Scope {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use pretty_assertions::assert_eq;
     use rhai::Engine;
+
+    use super::*;
 
     #[test]
     fn it_can_convert_to_rhai() {
@@ -187,8 +188,10 @@ mod test {
             ..Default::default()
         };
 
-        std::env::set_var("ASCENDED_NAME", "Morgan Le Fay");
-        std::env::set_var("REAL_NAME", "Ganos Lal");
+        unsafe {
+            std::env::set_var("ASCENDED_NAME", "Morgan Le Fay");
+            std::env::set_var("REAL_NAME", "Ganos Lal")
+        };
 
         let contexts = build_contexts(&config);
         let env_context_values = contexts.get("env");

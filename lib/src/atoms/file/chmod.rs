@@ -1,8 +1,7 @@
-use crate::atoms::Outcome;
-
-use super::super::Atom;
-use super::FileAtom;
 use std::path::PathBuf;
+
+use super::{super::Atom, FileAtom};
+use crate::atoms::Outcome;
 
 pub struct Chmod {
     pub path: PathBuf,
@@ -54,7 +53,7 @@ impl Atom for Chmod {
                     side_effects: vec![],
                     should_run: false,
                 });
-            }
+            },
         };
 
         // We expect permissions to come through as if the user was using chmod themselves.
@@ -95,8 +94,9 @@ impl Atom for Chmod {
 #[cfg(test)]
 #[cfg(unix)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_can_plan() {
@@ -105,7 +105,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         match std::fs::File::create(temp_dir.path().join("644")) {
@@ -113,7 +113,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         assert_eq!(
@@ -147,7 +147,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         match std::fs::File::create(temp_dir.path().join("644")) {
@@ -155,7 +155,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         assert_eq!(

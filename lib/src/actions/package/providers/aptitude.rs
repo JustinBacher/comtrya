@@ -1,13 +1,16 @@
-use super::PackageProvider;
-use crate::actions::package::{repository::PackageRepository, PackageVariant};
-use crate::atoms::command::Exec;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::utilities;
 use serde::{Deserialize, Serialize};
 use sha256::digest;
 use tracing::warn;
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Aptitude {}
@@ -32,7 +35,7 @@ impl PackageProvider for Aptitude {
             Err(_) => {
                 warn!(message = "apt-add-repository not available");
                 false
-            }
+            },
         }
     }
 
@@ -65,9 +68,7 @@ impl PackageProvider for Aptitude {
     }
 
     fn add_repository(
-        &self,
-        repository: &PackageRepository,
-        contexts: &Contexts,
+        &self, repository: &PackageRepository, contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         let mut steps: Vec<Step> = vec![];
 
@@ -99,7 +100,7 @@ impl PackageProvider for Aptitude {
             });
         }
 
-        //sudo apt-add-repository "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/<myrepository>-archive-keyring.gpg] https://repository.example.com/debian/ $(lsb_release -cs) stable main "
+        // sudo apt-add-repository "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/<myrepository>-archive-keyring.gpg] https://repository.example.com/debian/ $(lsb_release -cs) stable main "
         steps.extend(vec![
             Step {
                 atom: Box::new(Exec {
@@ -166,10 +167,8 @@ impl PackageProvider for Aptitude {
 
 #[cfg(test)]
 mod test {
-    use crate::actions::package::repository::RepositoryKey;
-    use crate::contexts::Contexts;
-
     use super::*;
+    use crate::{actions::package::repository::RepositoryKey, contexts::Contexts};
 
     // These tests are really weak at the moment, but that's because I'm not
     // sure how to add derive(Debug,Default) to struct Step

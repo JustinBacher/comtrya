@@ -1,11 +1,15 @@
-use super::PackageProvider;
-use crate::actions::package::repository::PackageRepository;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{actions::package::PackageVariant, atoms::command::Exec, utilities};
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Macports {}
@@ -21,7 +25,7 @@ impl PackageProvider for Macports {
             Err(_) => {
                 warn!(message = "MacPorts not available, check if in $PATH");
                 false
-            }
+            },
         }
     }
 
@@ -37,9 +41,7 @@ impl PackageProvider for Macports {
     }
 
     fn add_repository(
-        &self,
-        _repository: &PackageRepository,
-        _contexts: &Contexts,
+        &self, _repository: &PackageRepository, _contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         Ok(vec![])
     }
@@ -54,7 +56,7 @@ impl PackageProvider for Macports {
             Err(_) => {
                 warn!(message = "MacPorts is not availiable.");
                 return Ok(vec![]);
-            }
+            },
         };
 
         let privilege_provider =

@@ -1,12 +1,10 @@
-use crate::atoms::Outcome;
+use std::{io::Read, path::PathBuf};
 
-use super::super::Atom;
-use super::FileAtom;
-use age::armor::ArmoredReader;
-use age::secrecy::Secret;
-use std::io::Read;
-use std::path::PathBuf;
+use age::{armor::ArmoredReader, secrecy::Secret};
 use tracing::error;
+
+use super::{super::Atom, FileAtom};
+use crate::atoms::Outcome;
 
 pub struct Decrypt {
     pub encrypted_content: Vec<u8>,
@@ -58,7 +56,7 @@ impl Atom for Decrypt {
                     side_effects: vec![],
                     should_run: false,
                 })
-            }
+            },
         }
     }
 
@@ -87,11 +85,12 @@ fn decrypt(passphrase: &str, encrypted_content: &[u8]) -> anyhow::Result<Vec<u8>
 
 #[cfg(test)]
 mod tests {
+    use std::io::Write;
+
+    use pretty_assertions::assert_eq;
     use tempfile::NamedTempFile;
 
     use super::*;
-    use pretty_assertions::assert_eq;
-    use std::io::Write;
 
     #[test]
     fn it_can_plan() -> anyhow::Result<()> {

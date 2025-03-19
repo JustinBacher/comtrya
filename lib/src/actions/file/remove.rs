@@ -3,9 +3,8 @@ use std::path::PathBuf;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{actions::Action, steps::Step};
-
 use super::FileAction;
+use crate::{actions::Action, steps::Step};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileRemove {
@@ -22,9 +21,7 @@ impl Action for FileRemove {
     }
 
     fn plan(
-        &self,
-        _: &crate::manifests::Manifest,
-        _: &crate::contexts::Contexts,
+        &self, _: &crate::manifests::Manifest, _: &crate::contexts::Contexts,
     ) -> anyhow::Result<Vec<crate::steps::Step>> {
         use crate::atoms::file::Remove as RemoveFile;
 
@@ -56,10 +53,10 @@ mod tests {
         match actions.pop() {
             Some(Actions::FileRemove(action)) => {
                 assert_eq!("a", action.action.target);
-            }
+            },
             _ => {
                 panic!("FileRemove didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }

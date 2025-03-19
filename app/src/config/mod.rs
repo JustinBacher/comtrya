@@ -1,14 +1,14 @@
-use crate::commands;
-use clap::{Parser, Subcommand};
-
-use anyhow::{anyhow, Context, Result};
-pub use comtrya_lib::config::Config;
 use std::{
     path::{Path, PathBuf},
     vec,
 };
 
+use anyhow::{Context, Result, anyhow};
+use clap::{Parser, Subcommand};
+pub use comtrya_lib::config::Config;
 use tracing::{trace, warn};
+
+use crate::commands;
 
 #[derive(Parser, Debug, Default)]
 #[command(version, about, name="comtrya", long_about = None)]
@@ -117,7 +117,7 @@ pub fn lib_config(args: &GlobalArgs) -> anyhow::Result<Config> {
             }
 
             config
-        }
+        },
 
         None => {
             // Panic early if an incorrect configuration path was specified by the user.
@@ -132,7 +132,7 @@ pub fn lib_config(args: &GlobalArgs) -> anyhow::Result<Config> {
                 manifest_paths: vec![String::from(",")],
                 ..Default::default()
             }
-        }
+        },
     };
 
     Ok(config)
@@ -171,11 +171,11 @@ fn find_configs(args: &GlobalArgs) -> Option<PathBuf> {
             Ok(false) => {
                 trace!("Specified path does not exist.");
                 return None;
-            }
+            },
             Err(e) => {
                 trace!("Error checking path existence: {}", e);
                 return None;
-            }
+            },
         }
     }
 
@@ -206,8 +206,9 @@ fn find_configs(args: &GlobalArgs) -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::{lib_config, GlobalArgs};
     use std::path::PathBuf;
+
+    use crate::config::{GlobalArgs, lib_config};
 
     fn get_config_file() -> PathBuf {
         std::env::current_dir()

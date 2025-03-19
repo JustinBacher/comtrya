@@ -1,9 +1,9 @@
-use crate::atoms::Outcome;
-
-use super::super::Atom;
-use super::FileAtom;
 use std::path::PathBuf;
+
 use tracing::{error, warn};
+
+use super::{super::Atom, FileAtom};
+use crate::atoms::Outcome;
 
 pub struct Link {
     pub source: PathBuf,
@@ -65,7 +65,7 @@ impl Atom for Link {
                     side_effects: vec![],
                     should_run: false,
                 });
-            }
+            },
         };
 
         let source = if cfg!(target_os = "windows") {
@@ -103,8 +103,9 @@ impl Atom for Link {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_can() {
@@ -113,7 +114,7 @@ mod tests {
             Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let to_file = match tempfile::NamedTempFile::new() {
@@ -121,7 +122,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let mut atom = Link {

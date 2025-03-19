@@ -2,11 +2,12 @@
 // use self::freebsd::FreeBSDUserProvider;
 use crate::steps::Step;
 mod none;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use self::{freebsd::FreeBSDGroupProvider, none::NoneGroupProvider};
 use super::GroupVariant;
 use crate::contexts::Contexts;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 
 mod freebsd;
 mod linux;

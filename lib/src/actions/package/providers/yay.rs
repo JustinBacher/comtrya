@@ -1,16 +1,17 @@
-use super::PackageProvider;
-use crate::actions::package::repository::PackageRepository;
-use crate::actions::package::PackageVariant;
-use crate::atoms::command::Exec;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::utilities;
+use std::{collections::HashSet, process::Command};
+
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use std::process::Command;
-use tracing::warn;
-use tracing::{debug, trace};
+use tracing::{debug, trace, warn};
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Yay {}
@@ -26,7 +27,7 @@ impl PackageProvider for Yay {
             Err(_) => {
                 warn!(message = "yay not available");
                 false
-            }
+            },
         }
     }
 
@@ -82,9 +83,7 @@ impl PackageProvider for Yay {
     }
 
     fn add_repository(
-        &self,
-        _: &PackageRepository,
-        _contexts: &Contexts,
+        &self, _: &PackageRepository, _contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         Ok(vec![])
     }

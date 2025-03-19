@@ -1,10 +1,10 @@
-use super::FileAction;
-use crate::atoms::file::Unarchive;
-use crate::manifests::Manifest;
-use crate::steps::Step;
-use crate::{actions::Action, contexts::Contexts};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use super::FileAction;
+use crate::{
+    actions::Action, atoms::file::Unarchive, contexts::Contexts, manifests::Manifest, steps::Step,
+};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileUnarchive {
@@ -59,10 +59,10 @@ mod tests {
             Some(Actions::FileUnarchive(action)) => {
                 assert_eq!("a", action.action.from);
                 assert_eq!("b", action.action.to);
-            }
+            },
             _ => {
                 panic!("FileCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }

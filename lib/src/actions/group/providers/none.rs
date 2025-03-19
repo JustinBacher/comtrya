@@ -1,9 +1,8 @@
-use super::GroupProvider;
-use crate::actions::group::GroupVariant;
-use crate::contexts::Contexts;
-use crate::steps::Step;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
+
+use super::GroupProvider;
+use crate::{actions::group::GroupVariant, contexts::Contexts, steps::Step};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NoneGroupProvider {}

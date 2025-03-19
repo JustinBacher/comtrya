@@ -1,14 +1,19 @@
-use super::FileAction;
-use crate::manifests::Manifest;
-use crate::steps::initializers::FileExists;
-use crate::steps::initializers::FlowControl::Ensure;
-use crate::steps::Step;
-use crate::{actions::Action, contexts::Contexts};
+use std::{path::PathBuf, vec};
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::vec;
 use tracing::error;
+
+use super::FileAction;
+use crate::{
+    actions::Action,
+    contexts::Contexts,
+    manifests::Manifest,
+    steps::{
+        Step,
+        initializers::{FileExists, FlowControl::Ensure},
+    },
+};
 
 // TODO: Next Major Version - Deprecate from and to
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -54,8 +59,7 @@ impl FileLink {
     }
 
     pub fn plan_no_walk(from: PathBuf, to: PathBuf) -> Vec<Step> {
-        use crate::atoms::directory::Create as DirCreate;
-        use crate::atoms::file::Link;
+        use crate::atoms::{directory::Create as DirCreate, file::Link};
 
         match to.parent() {
             Some(parent) => {
@@ -76,14 +80,13 @@ impl FileLink {
                         finalizers: vec![],
                     },
                 ]
-            }
+            },
             None => vec![],
         }
     }
 
     pub fn plan_walk(from: PathBuf, to: PathBuf) -> Vec<Step> {
-        use crate::atoms::directory::Create as DirCreate;
-        use crate::atoms::file::Link;
+        use crate::atoms::{directory::Create as DirCreate, file::Link};
 
         let mut steps = vec![Step {
             atom: Box::new(DirCreate { path: to.clone() }),
@@ -144,14 +147,13 @@ impl Action for FileLink {
 
 #[cfg(test)]
 mod tests {
+    use super::FileLink;
     use crate::{
         actions::{Action, Actions},
         config::Config,
         contexts::build_contexts,
         manifests::Manifest,
     };
-
-    use super::FileLink;
 
     #[test]
     fn it_can_be_deserialized() {
@@ -167,10 +169,10 @@ mod tests {
             Some(Actions::FileLink(action)) => {
                 assert_eq!("a", action.action.source());
                 assert_eq!("b", action.action.target());
-            }
+            },
             _ => {
                 panic!("FileLink didn't deserialize to the correct type");
-            }
+            },
         };
 
         // Old style format
@@ -186,10 +188,10 @@ mod tests {
             Some(Actions::FileLink(action)) => {
                 assert_eq!("a", action.action.source());
                 assert_eq!("b", action.action.target());
-            }
+            },
             _ => {
                 panic!("FileLink didn't deserialize to the correct type");
-            }
+            },
         };
     }
 
@@ -200,7 +202,7 @@ mod tests {
             Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let manifest: Manifest = Manifest {
@@ -242,13 +244,14 @@ mod tests {
             Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         }
         .into_path();
 
         // We'll expect 2 extra Atoms
-        use rand::Rng;
         use std::io::Write;
+
+        use rand::Rng;
 
         let mut rng = rand::thread_rng();
         let number_of_files: usize = rng.gen_range(3..9);

@@ -1,9 +1,9 @@
+use clap::Parser;
+use colored::Colorize;
+use comfy_table::{Attribute, Cell, ContentArrangement, Table, presets::NOTHING};
+
 use super::ComtryaCommand;
 use crate::Runtime;
-use colored::Colorize;
-use comfy_table::{presets::NOTHING, Attribute, Cell, ContentArrangement, Table};
-
-use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command()]

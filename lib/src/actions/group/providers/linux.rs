@@ -1,10 +1,11 @@
-use super::GroupProvider;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{actions::group::GroupVariant, atoms::command::Exec, utilities};
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use which::which;
+
+use super::GroupProvider;
+use crate::{
+    actions::group::GroupVariant, atoms::command::Exec, contexts::Contexts, steps::Step, utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LinuxGroupProvider {}
@@ -16,7 +17,7 @@ impl GroupProvider for LinuxGroupProvider {
             Err(_) => {
                 warn!(message = "Could not get the proper group add tool");
                 return vec![];
-            }
+            },
         };
 
         if group.group_name.is_empty() {
@@ -44,9 +45,13 @@ impl GroupProvider for LinuxGroupProvider {
 #[cfg(target_os = "linux")]
 #[cfg(test)]
 mod test {
-    use crate::actions::group::providers::{GroupProvider, LinuxGroupProvider};
-    use crate::actions::group::GroupVariant;
-    use crate::contexts::Contexts;
+    use crate::{
+        actions::group::{
+            GroupVariant,
+            providers::{GroupProvider, LinuxGroupProvider},
+        },
+        contexts::Contexts,
+    };
 
     #[test]
     fn test_add_group() {

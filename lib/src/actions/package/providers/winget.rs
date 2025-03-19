@@ -1,11 +1,14 @@
-use super::PackageProvider;
-use crate::actions::package::repository::PackageRepository;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{actions::package::PackageVariant, atoms::command::Exec};
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Winget {}
@@ -21,7 +24,7 @@ impl PackageProvider for Winget {
             Err(_) => {
                 warn!(message = "winget not available");
                 false
-            }
+            },
         }
     }
 
@@ -34,9 +37,7 @@ impl PackageProvider for Winget {
     }
 
     fn add_repository(
-        &self,
-        _: &PackageRepository,
-        _contexts: &Contexts,
+        &self, _: &PackageRepository, _contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         Ok(vec![])
     }

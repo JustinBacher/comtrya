@@ -1,7 +1,7 @@
+use clap::Parser;
+
 use super::ComtryaCommand;
 use crate::Runtime;
-
-use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command()]

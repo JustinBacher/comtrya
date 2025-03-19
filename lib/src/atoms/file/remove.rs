@@ -2,9 +2,8 @@ use std::path::PathBuf;
 
 use tracing::error;
 
-use crate::atoms::{Atom, Outcome};
-
 use super::FileAtom;
+use crate::atoms::{Atom, Outcome};
 
 pub struct Remove {
     pub target: PathBuf,
@@ -51,7 +50,7 @@ impl Atom for Remove {
                         should_run: false,
                     });
                 }
-            }
+            },
             None => {
                 error!(
                     "Cannot plan: Failed to get parent directory of file: {}",
@@ -62,7 +61,7 @@ impl Atom for Remove {
                     side_effects: vec![],
                     should_run: false,
                 });
-            }
+            },
         };
 
         Ok(Outcome {
@@ -79,8 +78,9 @@ impl Atom for Remove {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_can_plan() {
@@ -89,7 +89,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let file_remove = Remove {
@@ -106,7 +106,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let mut file_remove = Remove {

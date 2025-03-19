@@ -1,12 +1,16 @@
-use super::PackageProvider;
-use crate::actions::package::repository::PackageRepository;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{actions::package::PackageVariant, atoms::command::Exec};
-use serde::{Deserialize, Serialize};
 use std::{path::Path, process::Command};
+
+use serde::{Deserialize, Serialize};
 use tracing::{debug, trace};
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Homebrew {}
@@ -21,14 +25,20 @@ impl PackageProvider for Homebrew {
     }
 
     fn bootstrap(&self, _contexts: &Contexts) -> Vec<Step> {
-        vec![Step { atom: Box::new(Exec {
-            command: String::from("bash"),
-            arguments: vec![
-                String::from("-c"),
-                String::from("$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)")
-            ],
-            ..Default::default()
-        }), initializers: vec![], finalizers: vec![] },]
+        vec![Step {
+            atom: Box::new(Exec {
+                command: String::from("bash"),
+                arguments: vec![
+                    String::from("-c"),
+                    String::from(
+                        "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)",
+                    ),
+                ],
+                ..Default::default()
+            }),
+            initializers: vec![],
+            finalizers: vec![],
+        }]
     }
 
     fn has_repository(&self, _: &PackageRepository) -> bool {
@@ -39,9 +49,7 @@ impl PackageProvider for Homebrew {
     }
 
     fn add_repository(
-        &self,
-        repository: &PackageRepository,
-        _contexts: &Contexts,
+        &self, repository: &PackageRepository, _contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         Ok(vec![Step {
             atom: Box::new(Exec {

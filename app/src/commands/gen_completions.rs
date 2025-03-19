@@ -1,12 +1,10 @@
 use std::io;
 
-use super::ComtryaCommand;
-use crate::Runtime;
-
 use clap::{Command, CommandFactory, Parser};
-use clap_complete::{generate, Generator, Shell};
+use clap_complete::{Generator, Shell, generate};
 
-use crate::GlobalArgs;
+use super::ComtryaCommand;
+use crate::{GlobalArgs, Runtime};
 
 #[derive(Parser, Debug)]
 #[command(arg_required_else_help = true)]
@@ -16,8 +14,13 @@ pub(crate) struct GenCompletions {
     shell: Shell,
 }
 
-fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
-    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
+fn print_completions<G: Generator>(generator: G, cmd: &mut Command) {
+    generate(
+        generator,
+        cmd,
+        cmd.get_name().to_string(),
+        &mut io::stdout(),
+    );
 }
 
 impl ComtryaCommand for GenCompletions {

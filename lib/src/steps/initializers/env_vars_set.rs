@@ -1,5 +1,6 @@
-use super::Initializer;
 use std::collections::HashMap;
+
+use super::Initializer;
 
 #[derive(Clone, Debug)]
 pub struct SetEnvVars(pub HashMap<String, String>);
@@ -7,7 +8,7 @@ pub struct SetEnvVars(pub HashMap<String, String>);
 impl Initializer for SetEnvVars {
     fn initialize(&self) -> anyhow::Result<bool> {
         for (key, value) in self.0.iter() {
-            std::env::set_var(key, value);
+            unsafe { std::env::set_var(key, value) };
         }
 
         Ok(true)
@@ -16,8 +17,9 @@ impl Initializer for SetEnvVars {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::env;
+
+    use super::*;
 
     #[test]
     fn test_env_vars() {

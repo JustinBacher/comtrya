@@ -1,9 +1,10 @@
+use std::path::PathBuf;
+
+use gix::{Url, interrupt, progress::Discard};
+use tracing::instrument;
+
 use super::super::Atom;
 use crate::atoms::Outcome;
-use gix::interrupt;
-use gix::{progress::Discard, Url};
-use std::path::PathBuf;
-use tracing::instrument;
 
 #[derive(Default)]
 pub struct Clone {

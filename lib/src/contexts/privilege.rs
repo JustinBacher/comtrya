@@ -1,7 +1,11 @@
-use crate::config::Config;
-use crate::contexts::{Context, ContextProvider};
-use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    config::Config,
+    contexts::{Context, ContextProvider},
+};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Privilege {
     #[serde(alias = "sudo")]

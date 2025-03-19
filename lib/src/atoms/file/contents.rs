@@ -1,9 +1,9 @@
-use crate::atoms::Outcome;
-
-use super::super::Atom;
-use super::FileAtom;
 use std::path::PathBuf;
+
 use tracing::error;
+
+use super::{super::Atom, FileAtom};
+use crate::atoms::Outcome;
 
 pub struct SetContents {
     pub path: PathBuf,
@@ -49,7 +49,7 @@ impl Atom for SetContents {
                     side_effects: vec![],
                     should_run: false,
                 });
-            }
+            },
         };
 
         Ok(Outcome {
@@ -67,8 +67,9 @@ impl Atom for SetContents {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_can() {
@@ -77,7 +78,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let file_contents = SetContents {

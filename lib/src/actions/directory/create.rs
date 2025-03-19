@@ -1,10 +1,12 @@
-use crate::atoms::directory::Create as DirectoryCreateAtom;
-use crate::manifests::Manifest;
-use crate::steps::Step;
-use crate::{actions::Action, contexts::Contexts};
+use std::path::PathBuf;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+
+use crate::{
+    actions::Action, atoms::directory::Create as DirectoryCreateAtom, contexts::Contexts,
+    manifests::Manifest, steps::Step,
+};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DirectoryCreate {
@@ -29,9 +31,9 @@ impl Action for DirectoryCreate {
 
 #[cfg(test)]
 mod tests {
-    use crate::actions::Actions;
-    use crate::manifests::Manifest;
     use std::path::PathBuf;
+
+    use crate::{actions::Actions, manifests::Manifest};
 
     fn get_manifest_dir() -> PathBuf {
         std::env::current_dir()
@@ -50,10 +52,10 @@ mod tests {
         match manifest.actions.pop() {
             Some(Actions::DirectoryCreate(action)) => {
                 assert_eq!("/some-directory", action.action.path);
-            }
+            },
             _ => {
                 panic!("DirectoryCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }

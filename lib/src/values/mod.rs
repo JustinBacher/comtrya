@@ -6,8 +6,8 @@ use std::{
 };
 
 use serde::{
-    de::{Error as SError, SeqAccess, Visitor},
     Deserialize, Deserializer, Serialize,
+    de::{Error as SError, SeqAccess, Visitor},
 };
 
 #[derive(Clone, PartialEq, PartialOrd)]
@@ -162,7 +162,7 @@ impl Debug for Value {
             Value::List(list) => {
                 formatter.write_str("List ")?;
                 formatter.debug_list().entries(list).finish()
-            }
+            },
         }
     }
 }
@@ -202,7 +202,7 @@ impl NumberVariant {
                         Ordering::Equal
                     }
                 })
-            }
+            },
             (NumberVariant::Signed(a), NumberVariant::Float(b)) => {
                 // FIXME: change to total_cmp for Rust >= 1.62.0
                 (a as f64).partial_cmp(&b).unwrap_or_else(|| {
@@ -215,7 +215,7 @@ impl NumberVariant {
                         Ordering::Equal
                     }
                 })
-            }
+            },
             (NumberVariant::Unsigned(a), NumberVariant::Float(b)) => {
                 // FIXME: change to total_cmp for Rust >= 1.62.0
                 (a as f64).partial_cmp(&b).unwrap_or_else(|| {
@@ -228,7 +228,7 @@ impl NumberVariant {
                         Ordering::Equal
                     }
                 })
-            }
+            },
             (NumberVariant::Float(a), NumberVariant::Signed(b)) => {
                 // FIXME: change to total_cmp for Rust >= 1.62.0
                 a.partial_cmp(&(b as f64)).unwrap_or_else(|| {
@@ -241,7 +241,7 @@ impl NumberVariant {
                         Ordering::Equal
                     }
                 })
-            }
+            },
             (NumberVariant::Float(a), NumberVariant::Unsigned(b)) => {
                 // FIXME: change to total_cmp for Rust >= 1.62.0
                 a.partial_cmp(&(b as f64)).unwrap_or_else(|| {
@@ -254,7 +254,7 @@ impl NumberVariant {
                         Ordering::Equal
                     }
                 })
-            }
+            },
         }
     }
 }
@@ -336,9 +336,10 @@ impl ToString for Value {
 mod test {
     use std::{borrow::Cow, ffi::OsString, path::PathBuf};
 
-    use crate::values::{Number, NumberVariant, Value};
     use anyhow::Ok;
     use pretty_assertions::assert_eq;
+
+    use crate::values::{Number, NumberVariant, Value};
 
     #[test]
     fn from_string_tests() -> anyhow::Result<()> {

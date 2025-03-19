@@ -1,6 +1,7 @@
-use crate::contexts::{Context, ContextProvider};
 use anyhow::Result;
 use dirs_next::{config_dir, data_dir, data_local_dir, document_dir, home_dir};
+
+use crate::contexts::{Context, ContextProvider};
 
 pub struct UserContextProvider {}
 

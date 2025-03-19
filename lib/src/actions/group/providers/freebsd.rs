@@ -1,9 +1,10 @@
-use super::GroupProvider;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{actions::group::GroupVariant, atoms::command::Exec, utilities};
 use serde::{Deserialize, Serialize};
 use tracing::warn;
+
+use super::GroupProvider;
+use crate::{
+    actions::group::GroupVariant, atoms::command::Exec, contexts::Contexts, steps::Step, utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FreeBSDGroupProvider {}
@@ -35,9 +36,13 @@ impl GroupProvider for FreeBSDGroupProvider {
 #[cfg(target_os = "freebsd")]
 #[cfg(test)]
 mod test {
-    use crate::actions::group::providers::{FreeBSDGroupProvider, GroupProvider};
-    use crate::actions::group::GroupVariant;
-    use crate::contexts::Contexts;
+    use crate::{
+        actions::group::{
+            GroupVariant,
+            providers::{FreeBSDGroupProvider, GroupProvider},
+        },
+        contexts::Contexts,
+    };
 
     #[test]
     fn test_add_group() {

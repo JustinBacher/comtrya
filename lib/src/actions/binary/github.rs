@@ -1,15 +1,18 @@
-use crate::actions::Action;
-use crate::atoms::file::Chmod;
-use crate::atoms::http::Download;
-use crate::contexts::Contexts;
-use crate::manifests::Manifest;
-use crate::steps::Step;
+use std::path::PathBuf;
+
 use anyhow::anyhow;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use tokio::runtime::Runtime;
 use tracing::debug;
+
+use crate::{
+    actions::Action,
+    atoms::{file::Chmod, http::Download},
+    contexts::Contexts,
+    manifests::Manifest,
+    steps::Step,
+};
 
 #[derive(Clone, Debug, Default, JsonSchema, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BinaryGitHub {
@@ -42,7 +45,7 @@ impl Action for BinaryGitHub {
             Ok(runtime) => runtime,
             Err(e) => {
                 return Err(anyhow!("Failed to create async runtime: {}", e));
-            }
+            },
         };
 
         let (owner, repo) = self.repository.split_once('/').ok_or_else(|| {
@@ -66,7 +69,7 @@ impl Action for BinaryGitHub {
             Ok(release) => release,
             Err(e) => {
                 return Err(anyhow!("Failed to find a release: {}", e));
-            }
+            },
         };
 
         let asset: Option<GitHubAsset> = release.assets.into_iter().fold(None, |acc, asset| {
@@ -114,7 +117,7 @@ impl Action for BinaryGitHub {
                     } else {
                         Some(ass)
                     }
-                }
+                },
                 None => Some(GitHubAsset {
                     url: asset.browser_download_url.into(),
                     score,
@@ -126,10 +129,10 @@ impl Action for BinaryGitHub {
             Some(asset) => {
                 debug!("Downloading {:?}", asset.url);
                 asset
-            }
+            },
             None => {
                 return Err(anyhow!("Failed to find a downloadable asset"));
-            }
+            },
         };
 
         Ok(vec![

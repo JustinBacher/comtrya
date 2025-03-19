@@ -1,11 +1,16 @@
-use crate::contexts::Contexts;
-use crate::steps::finalizers::RemoveEnvVars;
-use crate::steps::initializers::SetEnvVars;
-use crate::steps::Step;
-use crate::{actions::Action, manifests::Manifest, steps, utilities};
+use std::collections::HashMap;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::{
+    actions::Action,
+    contexts::Contexts,
+    manifests::Manifest,
+    steps,
+    steps::{Step, finalizers::RemoveEnvVars, initializers::SetEnvVars},
+    utilities,
+};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RunCommand {
@@ -83,10 +88,10 @@ mod tests {
             Some(Actions::CommandRun(action)) => {
                 assert_eq!("echo", action.action.command);
                 assert_eq!("hi", action.action.args.first().unwrap().as_str());
-            }
+            },
             _ => {
                 panic!("FileCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 
@@ -111,10 +116,10 @@ mod tests {
                 let value = action.action.env.get("GOROOT");
                 assert!(value.is_some());
                 assert_eq!("test", value.unwrap());
-            }
+            },
             _ => {
                 panic!("FileCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }

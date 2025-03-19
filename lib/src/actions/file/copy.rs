@@ -1,16 +1,19 @@
-use super::FileAction;
-use super::{default_chmod, from_octal};
-use crate::atoms::file::{Chown, Decrypt};
-use crate::manifests::Manifest;
-use crate::steps::Step;
-use crate::tera_functions::register_functions;
-use crate::{actions::Action, contexts::to_tera};
+use std::{error::Error as StdError, path::PathBuf, u32};
+
 use anyhow::anyhow;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::error::Error as StdError;
-use std::{path::PathBuf, u32};
 use tera::Tera;
+
+use super::{FileAction, default_chmod, from_octal};
+use crate::{
+    actions::Action,
+    atoms::file::{Chown, Decrypt},
+    contexts::to_tera,
+    manifests::Manifest,
+    steps::Step,
+    tera_functions::register_functions,
+};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileCopy {
@@ -49,9 +52,7 @@ impl Action for FileCopy {
     }
 
     fn plan(
-        &self,
-        manifest: &Manifest,
-        context: &crate::contexts::Contexts,
+        &self, manifest: &Manifest, context: &crate::contexts::Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         let contents = match self.load(manifest, &self.from) {
             Ok(contents) => {
@@ -69,13 +70,13 @@ impl Action for FileCopy {
                                     "Failed to render contents for FileCopy action: {}",
                                     source
                                 ));
-                            }
+                            },
                             None => {
                                 return Err(anyhow!(
                                     "Failed to render contents for FileCopy action: {}",
                                     err
                                 ));
-                            }
+                            },
                         },
                     }
                     .as_bytes()
@@ -83,17 +84,19 @@ impl Action for FileCopy {
                 } else {
                     contents
                 }
-            }
+            },
             Err(err) => {
                 return Err(anyhow!(
                     "Failed to get contents for FileCopy action: {}",
                     err.to_string()
                 ));
-            }
+            },
         };
 
-        use crate::atoms::directory::Create as DirCreate;
-        use crate::atoms::file::{Chmod, Create, SetContents};
+        use crate::atoms::{
+            directory::Create as DirCreate,
+            file::{Chmod, Create, SetContents},
+        };
 
         let mut path = PathBuf::from(&self.to);
 
@@ -190,10 +193,10 @@ mod tests {
                 assert_eq!("a", action.action.from);
                 assert_eq!("b", action.action.to);
                 assert_eq!(0o777, action.action.chmod);
-            }
+            },
             _ => {
                 panic!("FileCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 
@@ -217,10 +220,10 @@ mod tests {
                 assert_eq!(0o777, action.action.chmod);
                 assert_eq!("test", action.action.owner_user.as_deref().unwrap());
                 assert_eq!("test", action.action.owner_group.as_deref().unwrap());
-            }
+            },
             _ => {
                 panic!("FileCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }

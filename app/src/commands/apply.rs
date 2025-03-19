@@ -1,15 +1,18 @@
-use super::ComtryaCommand;
-use crate::Runtime;
+use core::panic;
+use std::{collections::HashMap, ops::Deref, path::PathBuf};
+
 use clap::Parser;
 use comfy_table::{Cell, ContentArrangement, Table};
-use comtrya_lib::contexts::to_rhai;
-use comtrya_lib::manifests::{load, Manifest};
-use core::panic;
-use petgraph::{visit::DfsPostOrder, Graph};
+use comtrya_lib::{
+    contexts::to_rhai,
+    manifests::{Manifest, load},
+};
+use petgraph::{Graph, visit::DfsPostOrder};
 use rhai::Engine;
-use std::path::PathBuf;
-use std::{collections::HashMap, ops::Deref};
 use tracing::{debug, error, info, instrument, span, trace, warn};
+
+use super::ComtryaCommand;
+use crate::Runtime;
 
 #[derive(Parser, Debug)]
 pub(crate) struct Apply {
@@ -49,8 +52,8 @@ impl Apply {
                 return Err(anyhow::anyhow!(
                     "Manifest location, {:?}, could be resolved",
                     first_manifest_path
-                ))
-            }
+                ));
+            },
         };
 
         trace!(manifests = self.manifests.join(",").deref(),);
@@ -133,7 +136,7 @@ impl ComtryaCommand for Apply {
                         );
 
                         return;
-                    }
+                    },
                 };
 
                 trace!(
@@ -229,11 +232,11 @@ impl ComtryaCommand for Apply {
                                 );
 
                                 result
-                            }
+                            },
                             Err(err) => {
                                 warn!("'where' condition '{}' failed: {}", where_condition, err);
                                 false
-                            }
+                            },
                         };
 
                     if !where_result {
@@ -254,7 +257,7 @@ impl ComtryaCommand for Apply {
                             info!("Action failed to get plan: {:?}", err);
                             successful = false;
                             continue;
-                        }
+                        },
                     };
 
                     let mut steps = plan
@@ -283,7 +286,7 @@ impl ComtryaCommand for Apply {
                                 debug!("Atom failed to execute: {:?}", err);
                                 successful = false;
                                 break;
-                            }
+                            },
                         }
 
                         if !step.do_finalizers_allow_us_to_continue() {

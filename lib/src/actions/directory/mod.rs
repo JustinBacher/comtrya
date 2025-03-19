@@ -1,6 +1,8 @@
-use crate::{actions::Action, manifests::Manifest};
-use normpath::PathExt;
 use std::path::PathBuf;
+
+use normpath::PathExt;
+
+use crate::{actions::Action, manifests::Manifest};
 
 mod copy;
 mod create;

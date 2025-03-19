@@ -29,9 +29,11 @@ pub fn register_functions(tera: &mut Tera) {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use std::io::Write;
+
     use tera::{Context, Tera};
+
+    use super::*;
 
     #[test]
     fn can_read_from_file() -> anyhow::Result<()> {

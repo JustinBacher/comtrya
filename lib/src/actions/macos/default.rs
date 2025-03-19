@@ -1,9 +1,9 @@
-use crate::atoms::command::Exec;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{actions::Action, manifests::Manifest};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::{
+    actions::Action, atoms::command::Exec, contexts::Contexts, manifests::Manifest, steps::Step,
+};
 
 // I went through all the examples here: https://macos-defaults.com/
 // and while arrays and dictionaries are valid values, I couldn't

@@ -8,19 +8,16 @@ mod macos;
 mod package;
 mod user;
 
-use crate::contexts::Contexts;
-use crate::manifests::Manifest;
-use crate::steps::Step;
+use std::fmt::Display;
+
 use anyhow::anyhow;
 use binary::BinaryGitHub;
 use command::run::RunCommand;
 use directory::{DirectoryCopy, DirectoryCreate, DirectoryRemove};
-use file::chown::FileChown;
-use file::copy::FileCopy;
-use file::download::FileDownload;
-use file::link::FileLink;
-use file::remove::FileRemove;
-use file::unarchive::FileUnarchive;
+use file::{
+    chown::FileChown, copy::FileCopy, download::FileDownload, link::FileLink, remove::FileRemove,
+    unarchive::FileUnarchive,
+};
 use git::GitClone;
 use group::add::GroupAdd;
 use macos::MacOSDefault;
@@ -28,11 +25,11 @@ use package::{PackageInstall, PackageRepository};
 use rhai::Engine;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
 use tracing::{error, warn};
 use user::add::UserAdd;
 
 use self::user::add_group::UserAddGroup;
+use crate::{contexts::Contexts, manifests::Manifest, steps::Step};
 
 #[derive(JsonSchema, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
@@ -80,7 +77,7 @@ where
                 Err(error) => {
                     error!("Failed execution condition for action: {}", error);
                     false
-                }
+                },
             }
         });
 
@@ -248,8 +245,10 @@ pub trait Action {
 
 #[cfg(test)]
 mod tests {
-    use crate::actions::{command::run::RunCommand, Actions};
-    use crate::manifests::Manifest;
+    use crate::{
+        actions::{Actions, command::run::RunCommand},
+        manifests::Manifest,
+    };
 
     #[test]
     fn can_parse_some_advanced_stuff() {
@@ -272,20 +271,17 @@ actions:
             _ => panic!("did not get a command to run"),
         };
 
-        assert_eq!(
-            ext.action,
-            RunCommand {
-                command: "echo".into(),
-                args: vec!["hi".into()],
-                privileged: false,
-                dir: std::env::current_dir()
-                    .unwrap()
-                    .into_os_string()
-                    .into_string()
-                    .unwrap(),
-                ..Default::default()
-            }
-        );
+        assert_eq!(ext.action, RunCommand {
+            command: "echo".into(),
+            args: vec!["hi".into()],
+            privileged: false,
+            dir: std::env::current_dir()
+                .unwrap()
+                .into_os_string()
+                .into_string()
+                .unwrap(),
+            ..Default::default()
+        });
 
         let variant = &ext.variants[0];
         assert_eq!(variant.condition, Some(String::from("Debian")));

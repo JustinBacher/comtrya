@@ -1,14 +1,15 @@
 mod load;
 pub use load::load;
 mod providers;
-use crate::actions::Actions;
+use std::path::{Path, PathBuf};
+
 use petgraph::prelude::*;
-pub use providers::register_providers;
-pub use providers::ManifestProvider;
+pub use providers::{ManifestProvider, register_providers};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use tracing::error;
+
+use crate::actions::Actions;
 
 #[derive(JsonSchema, Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -55,7 +56,7 @@ pub fn resolve(uri: &String) -> Option<PathBuf> {
         None => {
             error!("Failed to find manifests at {}", &uri);
             panic!();
-        }
+        },
     };
 
     Some(manifest_directory)

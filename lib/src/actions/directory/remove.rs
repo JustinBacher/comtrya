@@ -1,12 +1,10 @@
 use std::path::PathBuf;
 
-use crate::atoms::directory::Remove as RemoveDirAtom;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{actions::Action, steps::Step};
-
 use super::DirectoryAction;
+use crate::{actions::Action, atoms::directory::Remove as RemoveDirAtom, steps::Step};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DirectoryRemove {
@@ -23,9 +21,7 @@ impl Action for DirectoryRemove {
     }
 
     fn plan(
-        &self,
-        _manifest: &crate::manifests::Manifest,
-        _context: &crate::contexts::Contexts,
+        &self, _manifest: &crate::manifests::Manifest, _context: &crate::contexts::Contexts,
     ) -> anyhow::Result<Vec<crate::steps::Step>> {
         let path = PathBuf::from(&self.target);
 
@@ -55,10 +51,10 @@ mod tests {
         match actions.pop() {
             Some(Actions::DirectoryRemove(action)) => {
                 assert_eq!("a", action.action.target);
-            }
+            },
             _ => {
                 panic!("Dir Remove didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }

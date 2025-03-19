@@ -1,12 +1,17 @@
-use super::PackageProvider;
-use crate::actions::package::repository::PackageRepository;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{actions::package::PackageVariant, atoms::command::Exec, utilities};
-use serde::{Deserialize, Serialize};
 use std::default::Default;
+
+use serde::{Deserialize, Serialize};
 use tracing::warn;
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Snapcraft {}
@@ -22,7 +27,7 @@ impl PackageProvider for Snapcraft {
             Err(_) => {
                 warn!(message = "snap is not available");
                 false
-            }
+            },
         }
     }
 
@@ -52,9 +57,7 @@ impl PackageProvider for Snapcraft {
     }
 
     fn add_repository(
-        &self,
-        _package: &PackageRepository,
-        _contexts: &Contexts,
+        &self, _package: &PackageRepository, _contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         Ok(vec![])
     }
@@ -86,10 +89,8 @@ impl PackageProvider for Snapcraft {
 
 #[cfg(test)]
 mod test {
-    use crate::actions::package::providers::PackageProviders;
-    use crate::contexts::Contexts;
-
     use super::*;
+    use crate::{actions::package::providers::PackageProviders, contexts::Contexts};
 
     #[test]
     fn test_install() {

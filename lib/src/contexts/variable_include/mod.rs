@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use anyhow::Result;
 use reqwest::Url;
 
-use crate::{config::Config, contexts::Context, contexts::ContextProvider};
+use crate::{
+    config::Config,
+    contexts::{Context, ContextProvider},
+};
 
 pub mod dns;
 pub mod file;

@@ -22,11 +22,12 @@ use self::winget::Winget;
 mod xbps;
 use self::xbps::Xbps;
 mod zypper;
-use self::zypper::Zypper;
-use super::{repository::PackageRepository, PackageVariant};
-use crate::contexts::Contexts;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use self::zypper::Zypper;
+use super::{PackageVariant, repository::PackageRepository};
+use crate::contexts::Contexts;
 
 #[derive(JsonSchema, Clone, Debug, Serialize, Deserialize)]
 pub enum PackageProviders {
@@ -92,12 +93,12 @@ impl Default for PackageProviders {
 
         match info.os_type() {
             // Arch Variants
-            os_info::Type::Arch=> PackageProviders::Yay,
-            os_info::Type::Manjaro=> PackageProviders::Yay,
+            os_info::Type::Arch => PackageProviders::Yay,
+            os_info::Type::Manjaro => PackageProviders::Yay,
             os_info::Type::EndeavourOS => PackageProviders::Yay,
             // BSD operating systems
-            os_info::Type::DragonFly=> PackageProviders::BsdPkg,
-            os_info::Type::FreeBSD=> PackageProviders::BsdPkg,
+            os_info::Type::DragonFly => PackageProviders::BsdPkg,
+            os_info::Type::FreeBSD => PackageProviders::BsdPkg,
             os_info::Type::NetBSD => PackageProviders::Pkgin,
             // Debian / Ubuntu Variants
             os_info::Type::Debian => PackageProviders::Aptitude,
@@ -119,7 +120,10 @@ impl Default for PackageProviders {
             os_info::Type::Macos => PackageProviders::Homebrew,
             os_info::Type::Windows => PackageProviders::Winget,
 
-            _ => panic!("Sorry, but we don't have a default provider for {} OS. Please be explicit when requesting a package installation with `provider: XYZ`.", info.os_type()),
+            _ => panic!(
+                "Sorry, but we don't have a default provider for {} OS. Please be explicit when requesting a package installation with `provider: XYZ`.",
+                info.os_type()
+            ),
         }
     }
 }
@@ -130,9 +134,7 @@ pub trait PackageProvider {
     fn bootstrap(&self, contexts: &Contexts) -> Vec<Step>;
     fn has_repository(&self, package: &PackageRepository) -> bool;
     fn add_repository(
-        &self,
-        package: &PackageRepository,
-        contexts: &Contexts,
+        &self, package: &PackageRepository, contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>>;
     fn query(&self, package: &PackageVariant) -> anyhow::Result<Vec<String>>;
     fn install(&self, package: &PackageVariant, contexts: &Contexts) -> anyhow::Result<Vec<Step>>;

@@ -4,7 +4,6 @@ pub use command_found::CommandFound;
 mod env_vars_set;
 mod file_exists;
 pub use env_vars_set::SetEnvVars;
-
 pub use file_exists::FileExists;
 
 #[allow(dead_code)]
@@ -20,8 +19,9 @@ pub trait Initializer {
 
 #[cfg(test)]
 pub(crate) mod test {
-    use super::Initializer;
     use anyhow::anyhow;
+
+    use super::Initializer;
 
     #[derive(Clone, Debug)]
     pub struct Echo(pub bool);

@@ -1,6 +1,8 @@
-use crate::contexts::privilege::Privilege;
-use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::contexts::privilege::Privilege;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Config {

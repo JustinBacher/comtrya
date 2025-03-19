@@ -64,9 +64,10 @@ mod tests {
 
     use std::{fs::File, io::Write};
 
-    use super::*;
     use pretty_assertions::assert_eq;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[test]
     fn it_can_plan() {
@@ -98,7 +99,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let path = temp_dir.path();

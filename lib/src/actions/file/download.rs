@@ -1,12 +1,12 @@
-use super::FileAction;
-use super::{default_chmod, from_octal};
-use crate::atoms::file::Chown;
-use crate::manifests::Manifest;
-use crate::steps::Step;
-use crate::{actions::Action, contexts::Contexts};
+use std::{path::PathBuf, u32};
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::{path::PathBuf, u32};
+
+use super::{FileAction, default_chmod, from_octal};
+use crate::{
+    actions::Action, atoms::file::Chown, contexts::Contexts, manifests::Manifest, steps::Step,
+};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename = "file.download")]
@@ -41,9 +41,7 @@ impl Action for FileDownload {
     }
 
     fn plan(&self, _manifest: &Manifest, _context: &Contexts) -> anyhow::Result<Vec<Step>> {
-        use crate::atoms::directory::Create as DirCreate;
-        use crate::atoms::file::Chmod;
-        use crate::atoms::http::Download;
+        use crate::atoms::{directory::Create as DirCreate, file::Chmod, http::Download};
 
         let path = PathBuf::from(&self.to);
         let parent = path.clone();
@@ -103,8 +101,7 @@ impl Action for FileDownload {
 
 #[cfg(test)]
 mod tests {
-    use crate::actions::file::download::FileDownload;
-    use crate::actions::{Action, Actions};
+    use crate::actions::{Action, Actions, file::download::FileDownload};
 
     #[test]
     fn it_can_be_deserialized() {
@@ -120,10 +117,10 @@ mod tests {
             Some(Actions::FileDownload(action)) => {
                 assert_eq!("a", action.action.from);
                 assert_eq!("b", action.action.to);
-            }
+            },
             _ => {
                 panic!("FileDownload didn't deserialize to the correct type");
-            }
+            },
         };
     }
 
@@ -146,10 +143,10 @@ mod tests {
                 assert_eq!("b", action.action.to);
                 assert_eq!("test", action.action.owner_user.unwrap());
                 assert_eq!("test", action.action.owner_group.unwrap());
-            }
+            },
             _ => {
                 panic!("FileDownload didn't deserialize to the correct type");
-            }
+            },
         };
     }
 

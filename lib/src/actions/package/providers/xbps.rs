@@ -1,15 +1,17 @@
-use super::PackageProvider;
-use crate::actions::package::repository::PackageRepository;
-use crate::actions::package::PackageVariant;
-use crate::atoms::command::Exec;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::utilities;
+use std::{collections::HashSet, process::Command};
+
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use std::process::Command;
 use tracing::{debug, trace, warn};
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Xbps {}
@@ -25,18 +27,18 @@ impl PackageProvider for Xbps {
         match which("xbps-install") {
             Ok(_) => {
                 install = true;
-            }
+            },
             Err(_) => {
                 warn!(message = "xbps-install not available");
-            }
+            },
         };
         match which("xbps-query") {
             Ok(_) => {
                 query = true;
-            }
+            },
             Err(_) => {
                 warn!(message = "xbps-query not available");
-            }
+            },
         };
         install && query
     }
@@ -50,9 +52,7 @@ impl PackageProvider for Xbps {
     }
 
     fn add_repository(
-        &self,
-        _: &PackageRepository,
-        _contexts: &Contexts,
+        &self, _: &PackageRepository, _contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         Ok(vec![])
     }

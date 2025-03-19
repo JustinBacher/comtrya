@@ -1,6 +1,6 @@
-use crate::atoms::Atom;
-use crate::steps::finalizers::FlowControl;
 use tracing::error;
+
+use crate::{atoms::Atom, steps::finalizers::FlowControl};
 
 pub mod finalizers;
 pub mod initializers;
@@ -24,7 +24,7 @@ impl Step {
                         // run; so lets play it safe and filter it out too
                         false
                     })
-                }
+                },
 
                 initializers::FlowControl::SkipIf(i) => {
                     match i.initialize() {
@@ -32,7 +32,7 @@ impl Step {
                             // Returning false because we should Skip if true, so false
                             // will filter this out of the atom list
                             false
-                        }
+                        },
                         Ok(false) => true,
                         Err(err) => {
                             error!("Failed to run initializer: {}", err.to_string());
@@ -40,9 +40,9 @@ impl Step {
                             // On an error, we can't really determine if this Atom should
                             // run; so lets play it safe and filter it out too
                             false
-                        }
+                        },
                     }
-                }
+                },
             })
     }
 
@@ -56,7 +56,7 @@ impl Step {
                             // Returning false because we should Skip if true, so false
                             // will filter this out of the atom list
                             false
-                        }
+                        },
                         Ok(false) => true,
                         Err(err) => {
                             error!("Failed to run finalizers: {}", err.to_string());
@@ -64,9 +64,9 @@ impl Step {
                             // On an error, we can't really determine if this Atom should
                             // run; so lets play it safe and filter it out too
                             false
-                        }
+                        },
                     }
-                }
+                },
                 FlowControl::Ensure(i) => {
                     match i.finalize(self.atom.as_ref()) {
                         Ok(true) => true,
@@ -77,25 +77,29 @@ impl Step {
                             // On an error, we can't really determine if this Atom should
                             // run; so lets play it safe and filter it out too
                             false
-                        }
+                        },
                     }
-                }
+                },
             })
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::finalizers::test::EchoFinalizer;
-    use super::finalizers::test::ErrorFinalizer;
-    use super::finalizers::FlowControl as FinalizerFlowControl;
-    use super::initializers::test::Echo as EchoInitializer;
-    use super::initializers::test::Error as ErrorInitializer;
-    use super::initializers::FlowControl as InitializerFlowControl;
-    use crate::atoms::Echo as EchoAtom;
     use pretty_assertions::assert_eq;
 
-    use super::*;
+    use super::{
+        finalizers::{
+            FlowControl as FinalizerFlowControl,
+            test::{EchoFinalizer, ErrorFinalizer},
+        },
+        initializers::{
+            FlowControl as InitializerFlowControl,
+            test::{Echo as EchoInitializer, Error as ErrorInitializer},
+        },
+        *,
+    };
+    use crate::atoms::Echo as EchoAtom;
 
     #[test]
     fn initializers_can_control_execution() {

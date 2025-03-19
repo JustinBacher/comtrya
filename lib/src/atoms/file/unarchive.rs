@@ -3,9 +3,8 @@ use std::{fs::File, path::PathBuf};
 use flate2::read::GzDecoder;
 use tar::Archive;
 
-use crate::atoms::{Atom, Outcome};
-
 use super::FileAtom;
+use crate::atoms::{Atom, Outcome};
 
 pub struct Unarchive {
     pub origin: PathBuf,

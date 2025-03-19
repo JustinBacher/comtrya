@@ -1,6 +1,6 @@
-use crate::atoms::Atom;
-use crate::steps::finalizers::Finalizer;
 use std::collections::HashMap;
+
+use crate::{atoms::Atom, steps::finalizers::Finalizer};
 
 #[derive(Clone, Debug)]
 pub struct RemoveEnvVars(pub HashMap<String, String>);
@@ -8,7 +8,7 @@ pub struct RemoveEnvVars(pub HashMap<String, String>);
 impl Finalizer for RemoveEnvVars {
     fn finalize(&self, _atom: &dyn Atom) -> anyhow::Result<bool> {
         for (key, _value) in self.0.iter() {
-            std::env::remove_var(key);
+            unsafe { std::env::remove_var(key) };
         }
 
         Ok(true)
@@ -17,14 +17,15 @@ impl Finalizer for RemoveEnvVars {
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
     use super::*;
     use crate::atoms::Echo;
-    use std::env;
 
     #[test]
     fn test_env_vars() {
         let atom = Echo("goodbye-world");
-        env::set_var("FOO", "bar");
+        unsafe { env::set_var("FOO", "bar") };
 
         let map = HashMap::from([("FOO".to_string(), "bar".to_string())]);
         let finalizer = RemoveEnvVars(map);

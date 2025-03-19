@@ -1,10 +1,10 @@
-use crate::atoms::Outcome;
-
-use super::super::Atom;
-use super::FileAtom;
-use file_diff::diff;
 use std::path::PathBuf;
+
+use file_diff::diff;
 use tracing::error;
+
+use super::{super::Atom, FileAtom};
+use crate::atoms::Outcome;
 
 pub struct Copy {
     pub from: PathBuf,
@@ -57,9 +57,11 @@ impl Atom for Copy {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use pretty_assertions::assert_eq;
     use std::io::Write;
+
+    use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_can_plan() {
@@ -68,7 +70,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let mut from_file = match tempfile::NamedTempFile::new() {
@@ -76,7 +78,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         assert_eq!(
@@ -112,7 +114,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let mut from_file = match tempfile::NamedTempFile::new() {
@@ -120,7 +122,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         assert_eq!(
@@ -149,7 +151,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let from_file = match tempfile::NamedTempFile::new() {
@@ -157,7 +159,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let file_copy = Copy {

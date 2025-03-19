@@ -1,13 +1,12 @@
-use super::providers::PackageProviders;
-use crate::actions::Action;
-use crate::contexts::Contexts;
-use crate::manifests::Manifest;
-use crate::steps::Step;
+use std::ops::Deref;
+
 use anyhow::anyhow;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
 use tracing::span;
+
+use super::providers::PackageProviders;
+use crate::{actions::Action, contexts::Contexts, manifests::Manifest, steps::Step};
 
 #[derive(JsonSchema, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct PackageRepository {

@@ -1,12 +1,8 @@
-use super::{ManifestProvider, ManifestProviderError};
-
-use gix;
-use gix::interrupt;
-use gix::progress::Discard;
-
 use dirs_next;
-
+use gix::{self, interrupt, progress::Discard};
 use tracing::info;
+
+use super::{ManifestProvider, ManifestProviderError};
 
 #[derive(Debug)]
 pub struct GitManifestProvider;
@@ -30,8 +26,7 @@ impl ManifestProvider for GitManifestProvider {
     }
 
     fn resolve(
-        &self,
-        url: &str,
+        &self, url: &str,
     ) -> anyhow::Result<std::path::PathBuf, super::ManifestProviderError> {
         let config = self.parse_config_url(url);
         let clean_url = self.clean_git_url(&config.repository);
@@ -51,9 +46,7 @@ impl ManifestProvider for GitManifestProvider {
 
 impl GitManifestProvider {
     fn fetch_and_clone(
-        &self,
-        cache_path: &std::path::Path,
-        config: &GitConfig,
+        &self, cache_path: &std::path::Path, config: &GitConfig,
     ) -> anyhow::Result<(), super::ManifestProviderError> {
         info!("Preparing to fetch and clone manifests.");
         let r = std::fs::create_dir_all(cache_path);
@@ -116,7 +109,7 @@ impl GitManifestProvider {
                     branch: None,
                     path: None,
                 };
-            }
+            },
         };
 
         let (reference, path) = match parts.split_once(':') {
@@ -128,8 +121,8 @@ impl GitManifestProvider {
                     repository: String::from(repository),
                     branch: Some(parts.to_string()),
                     path: None,
-                }
-            }
+                };
+            },
         };
 
         GitConfig {

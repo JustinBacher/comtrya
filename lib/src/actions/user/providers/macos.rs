@@ -1,12 +1,15 @@
-use super::UserProvider;
-use crate::actions::user::{add_group::UserAddGroup, UserVariant};
-use crate::atoms::command::Exec;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::utilities;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use which::which;
+
+use super::UserProvider;
+use crate::{
+    actions::user::{UserVariant, add_group::UserAddGroup},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MacOSUserProvider {}
@@ -19,7 +22,7 @@ impl UserProvider for MacOSUserProvider {
             Err(_) => {
                 warn!(message = "Could not find proper user add tool");
                 return Ok(vec![]);
-            }
+            },
         };
 
         // is a user name isn't provided, cant create a new user
@@ -80,7 +83,7 @@ impl UserProvider for MacOSUserProvider {
             Err(_) => {
                 warn!(message = "Could not find the dscl tool");
                 return Ok(vec![]);
-            }
+            },
         };
 
         if user.group.is_empty() {
@@ -130,9 +133,14 @@ impl UserProvider for MacOSUserProvider {
 #[cfg(target_os = "macos")]
 #[cfg(test)]
 mod test {
-    use crate::actions::user::providers::{MacOSUserProvider, UserProvider};
-    use crate::actions::user::{add_group::UserAddGroup, UserVariant};
-    use crate::contexts::Contexts;
+    use crate::{
+        actions::user::{
+            UserVariant,
+            add_group::UserAddGroup,
+            providers::{MacOSUserProvider, UserProvider},
+        },
+        contexts::Contexts,
+    };
 
     #[test]
     fn test_add_user() {

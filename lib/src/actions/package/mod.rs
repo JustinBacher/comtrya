@@ -2,12 +2,13 @@ mod install;
 mod providers;
 mod repository;
 
+use std::collections::HashMap;
+
 pub(crate) use install::PackageInstall;
 use providers::PackageProviders;
 pub(crate) use repository::PackageRepository;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tracing::debug;
 
 #[derive(JsonSchema, Clone, Debug, Default, Serialize, Deserialize)]

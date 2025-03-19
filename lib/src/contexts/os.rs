@@ -1,7 +1,8 @@
-use crate::contexts::{Context, ContextProvider};
 use anyhow::Result;
 use gethostname::gethostname;
 use os_info;
+
+use crate::contexts::{Context, ContextProvider};
 
 pub struct OSContextProvider {}
 
@@ -66,7 +67,7 @@ mod test {
             },
             Context::ListContext(_, _) => {
                 assert_eq!(true, false);
-            }
+            },
         })
     }
 
@@ -84,7 +85,7 @@ mod test {
             },
             Context::ListContext(_, _) => {
                 assert_eq!(true, false);
-            }
+            },
         })
     }
 
@@ -102,7 +103,7 @@ mod test {
             },
             Context::ListContext(_, _) => {
                 assert_eq!(true, false);
-            }
+            },
         })
     }
 
@@ -120,7 +121,7 @@ mod test {
             },
             Context::ListContext(_, _) => {
                 assert_eq!(true, false);
-            }
+            },
         })
     }
 }

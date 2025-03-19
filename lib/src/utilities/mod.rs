@@ -1,5 +1,6 @@
-use crate::contexts::Contexts;
 use which;
+
+use crate::contexts::Contexts;
 
 pub fn get_binary_path(binary: &str) -> Result<String, anyhow::Error> {
     let binary = which::which(String::from(binary))?

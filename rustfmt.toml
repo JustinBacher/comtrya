@@ -1,0 +1,22 @@
+edition = "2024"
+style_edition = "2024"
+unstable_features = true
+
+newline_style = "Unix"
+indent_style = "Block"
+
+imports_granularity = "Crate"
+reorder_imports = true
+group_imports = "StdExternalCrate"
+
+normalize_doc_attributes = true
+normalize_comments = true
+
+fn_params_layout = "Compressed"
+where_single_line = false
+
+match_block_trailing_comma = true
+
+use_field_init_shorthand = true
+reorder_impl_items = true
+overflow_delimited_expr = true

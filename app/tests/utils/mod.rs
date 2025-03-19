@@ -1,13 +1,12 @@
 #![allow(dead_code)]
-use assert_cmd::{assert::Assert, Command};
-use std::io::Result;
+// re-export for all modules to share
 use std::{
-    fs::{create_dir, File},
-    path::Path,
+    fs::{File, create_dir},
+    io::Result,
+    path::{Path, PathBuf},
 };
 
-// re-export for all modules to share
-use std::path::PathBuf;
+use assert_cmd::{Command, assert::Assert};
 
 pub(crate) struct Dir {
     cwd: PathBuf,
@@ -62,13 +61,13 @@ impl Entry {
                 for entry in entries {
                     entry.create_in(&new_dir)?;
                 }
-            }
+            },
             Entry::File { name, content } => {
                 use std::io::Write;
                 let new_path = parent.join(name);
                 let mut f = File::create(new_path)?;
                 f.write_all(&content.into_bytes()[..])?;
-            }
+            },
         }
         Ok(())
     }

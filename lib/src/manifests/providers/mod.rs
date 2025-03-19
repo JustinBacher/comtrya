@@ -1,6 +1,7 @@
 mod local;
-use local::LocalManifestProvider;
 use std::path::PathBuf;
+
+use local::LocalManifestProvider;
 mod git;
 use git::GitManifestProvider;
 

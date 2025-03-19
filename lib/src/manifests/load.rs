@@ -1,15 +1,17 @@
-use super::Manifest;
-use crate::{
-    contexts::{to_tera, Contexts},
-    manifests::get_manifest_name,
-    tera_functions::register_functions,
-};
-use ignore::WalkBuilder;
 use std::{
     collections::HashMap, error::Error, ffi::OsStr, fs::canonicalize, ops::Deref, path::PathBuf,
 };
+
+use ignore::WalkBuilder;
 use tera::Tera;
 use tracing::{error, span};
+
+use super::Manifest;
+use crate::{
+    contexts::{Contexts, to_tera},
+    manifests::get_manifest_name,
+    tera_functions::register_functions,
+};
 
 pub fn load(manifest_path: PathBuf, contexts: &Contexts) -> HashMap<String, Manifest> {
     let mut manifests: HashMap<String, Manifest> = HashMap::new();

@@ -2,15 +2,15 @@ mod freebsd;
 use self::freebsd::FreeBSDUserProvider;
 use crate::steps::Step;
 mod none;
-use self::none::NoneUserProvider;
-use super::{add_group::UserAddGroup, UserVariant};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use self::none::NoneUserProvider;
+use super::{UserVariant, add_group::UserAddGroup};
 mod linux;
 use self::linux::LinuxUserProvider;
 mod macos;
 use self::macos::MacOSUserProvider;
-
 use crate::contexts::Contexts;
 
 #[derive(JsonSchema, Clone, Debug, Serialize, Deserialize)]

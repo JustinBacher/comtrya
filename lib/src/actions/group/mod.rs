@@ -1,10 +1,11 @@
 pub mod add;
 pub mod providers;
 
+use std::collections::HashMap;
+
 use providers::GroupProviders;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tracing::debug;
 
 #[derive(JsonSchema, Clone, Debug, Default, Serialize, Deserialize)]

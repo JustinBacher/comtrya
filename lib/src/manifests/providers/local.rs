@@ -1,6 +1,6 @@
-use super::{ManifestProvider, ManifestProviderError};
-
 use std::path::PathBuf;
+
+use super::{ManifestProvider, ManifestProviderError};
 
 #[derive(Debug)]
 pub struct LocalManifestProvider;
@@ -22,8 +22,10 @@ impl ManifestProvider for LocalManifestProvider {
 
 #[cfg(test)]
 mod test {
-    use super::super::{ManifestProvider, ManifestProviderError};
-    use super::LocalManifestProvider;
+    use super::{
+        super::{ManifestProvider, ManifestProviderError},
+        LocalManifestProvider,
+    };
 
     #[test]
     fn test_resolve_absolute_url() {

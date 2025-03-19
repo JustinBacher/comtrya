@@ -1,9 +1,8 @@
-use crate::atoms::Outcome;
-
-use super::super::Atom;
-use crate::utilities;
 use anyhow::anyhow;
 use tracing::debug;
+
+use super::super::Atom;
+use crate::{atoms::Outcome, utilities};
 
 #[derive(Default)]
 pub struct Exec {
@@ -123,7 +122,7 @@ impl Atom for Exec {
                 Ok(_) => (),
                 Err(err) => {
                     return Err(anyhow!(err));
-                }
+                },
             }
         }
 
@@ -144,7 +143,7 @@ impl Atom for Exec {
                 debug!("stdout: {}", &self.status.stdout);
 
                 Ok(())
-            }
+            },
 
             Ok(output) => {
                 self.status.stdout = String::from_utf8(output.stdout)?;
@@ -158,7 +157,7 @@ impl Atom for Exec {
                     "Command failed with exit code: {}",
                     output.status.code().unwrap_or(1)
                 ))
-            }
+            },
 
             Err(err) => Err(anyhow!(err)),
         }
@@ -175,9 +174,10 @@ impl Atom for Exec {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use super::*;
     use crate::contexts::privilege::Privilege;
-    use pretty_assertions::assert_eq;
 
     #[test]
     fn defaults() {

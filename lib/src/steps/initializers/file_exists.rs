@@ -13,8 +13,9 @@ impl Initializer for FileExists {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_returns_false_when_not_found() {
@@ -32,7 +33,7 @@ mod tests {
             std::result::Result::Err(_) => {
                 assert_eq!(false, true);
                 return;
-            }
+            },
         };
 
         let path_buf = to_file.path().to_path_buf();

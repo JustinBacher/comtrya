@@ -11,8 +11,9 @@ impl Initializer for CommandFound {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn it_returns_false_when_not_found() {

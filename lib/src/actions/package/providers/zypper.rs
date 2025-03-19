@@ -1,12 +1,15 @@
-use super::PackageProvider;
-use crate::actions::package::{repository::PackageRepository, PackageVariant};
-use crate::atoms::command::Exec;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::utilities;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Zypper {}
@@ -22,7 +25,7 @@ impl PackageProvider for Zypper {
             Err(_) => {
                 warn!(message = "zypper not available");
                 false
-            }
+            },
         }
     }
 
@@ -35,9 +38,7 @@ impl PackageProvider for Zypper {
     }
 
     fn add_repository(
-        &self,
-        _repository: &PackageRepository,
-        _contexts: &Contexts,
+        &self, _repository: &PackageRepository, _contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         Ok(vec![])
     }
@@ -70,10 +71,8 @@ impl PackageProvider for Zypper {
 
 #[cfg(test)]
 mod test {
-    use crate::actions::package::providers::PackageProviders;
-    use crate::contexts::Contexts;
-
     use super::*;
+    use crate::{actions::package::providers::PackageProviders, contexts::Contexts};
 
     #[test]
     fn test_install() {

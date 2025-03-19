@@ -1,8 +1,7 @@
-use crate::atoms::Outcome;
+use std::{fs::File, io::Write, path::PathBuf};
 
 use super::super::Atom;
-use std::io::Write;
-use std::{fs::File, path::PathBuf};
+use crate::atoms::Outcome;
 
 pub struct Download {
     pub url: String,
@@ -41,9 +40,10 @@ impl Atom for Download {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[test]
     fn it_can() {
@@ -51,7 +51,9 @@ mod tests {
         let to_file = tmpdir.path().join("download");
 
         let mut atom = Download {
-            url: String::from("https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"),
+            url: String::from(
+                "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png",
+            ),
             to: to_file,
         };
 

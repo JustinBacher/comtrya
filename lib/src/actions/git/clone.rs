@@ -1,10 +1,9 @@
-use crate::actions::Action;
-use crate::contexts::Contexts;
-use crate::manifests::Manifest;
-use crate::steps::Step;
+use std::path::PathBuf;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+
+use crate::{actions::Action, contexts::Contexts, manifests::Manifest, steps::Step};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GitClone {

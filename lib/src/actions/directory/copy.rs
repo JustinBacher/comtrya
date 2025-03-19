@@ -1,10 +1,10 @@
-use super::DirectoryAction;
-use crate::actions::Action;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{atoms::command::Exec, manifests::Manifest};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use super::DirectoryAction;
+use crate::{
+    actions::Action, atoms::command::Exec, contexts::Contexts, manifests::Manifest, steps::Step,
+};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DirectoryCopy {
@@ -75,9 +75,9 @@ impl Action for DirectoryCopy {
 
 #[cfg(test)]
 mod tests {
-    use crate::actions::Actions;
-    use crate::manifests::Manifest;
     use std::path::PathBuf;
+
+    use crate::{actions::Actions, manifests::Manifest};
 
     fn get_manifest_dir() -> PathBuf {
         std::env::current_dir()
@@ -98,10 +98,10 @@ mod tests {
             Some(Actions::DirectoryCopy(action)) => {
                 assert_eq!("mydir", action.action.from);
                 assert_eq!("/tmp/dircopy", action.action.to);
-            }
+            },
             _ => {
                 panic!("DirectoryCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }

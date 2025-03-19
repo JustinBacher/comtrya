@@ -3,7 +3,6 @@ use crate::atoms::Atom;
 mod env_vars_remove;
 mod output_contains;
 pub use env_vars_remove::RemoveEnvVars;
-
 pub use output_contains::OutputContains;
 
 #[allow(dead_code)]
@@ -20,8 +19,9 @@ pub trait Finalizer {
 
 #[cfg(test)]
 pub mod test {
-    use super::*;
     use anyhow::anyhow;
+
+    use super::*;
 
     pub struct EchoFinalizer(pub bool);
 

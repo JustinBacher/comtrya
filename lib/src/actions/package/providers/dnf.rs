@@ -1,13 +1,15 @@
-use super::PackageProvider;
-
-use crate::actions::package::{repository::PackageRepository, PackageVariant};
-use crate::atoms::command::Exec;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::utilities;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use which::which;
+
+use super::PackageProvider;
+use crate::{
+    actions::package::{PackageVariant, repository::PackageRepository},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Dnf {}
@@ -23,7 +25,7 @@ impl PackageProvider for Dnf {
             Err(_) => {
                 warn!(message = "dnf not available");
                 false
-            }
+            },
         }
     }
 
@@ -53,9 +55,7 @@ impl PackageProvider for Dnf {
     }
 
     fn add_repository(
-        &self,
-        repository: &PackageRepository,
-        contexts: &Contexts,
+        &self, repository: &PackageRepository, contexts: &Contexts,
     ) -> anyhow::Result<Vec<Step>> {
         let mut steps: Vec<Step> = vec![];
 
@@ -148,10 +148,11 @@ impl PackageProvider for Dnf {
 
 #[cfg(test)]
 mod test {
-    use crate::actions::package::{providers::PackageProviders, repository::RepositoryKey};
-    use crate::contexts::Contexts;
-
     use super::*;
+    use crate::{
+        actions::package::{providers::PackageProviders, repository::RepositoryKey},
+        contexts::Contexts,
+    };
 
     #[test]
     fn test_add_repository_without_key() {

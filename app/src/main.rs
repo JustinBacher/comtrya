@@ -1,17 +1,18 @@
-use crate::commands::ComtryaCommand;
-use crate::config::{Commands, GlobalArgs};
-
 use std::io;
 
-use comtrya_lib::contexts::build_contexts;
-use comtrya_lib::contexts::Contexts;
-use comtrya_lib::manifests;
-
 use clap::Parser;
-use tracing::{error, Level};
-
+use comtrya_lib::{
+    contexts::{Contexts, build_contexts},
+    manifests,
+};
+use tracing::{Level, error};
 #[allow(unused_imports)]
-use tracing_subscriber::{fmt::writer::MakeWriterExt, layer::SubscriberExt, FmtSubscriber};
+use tracing_subscriber::{FmtSubscriber, fmt::writer::MakeWriterExt, layer::SubscriberExt};
+
+use crate::{
+    commands::ComtryaCommand,
+    config::{Commands, GlobalArgs},
+};
 
 mod commands;
 mod config;
@@ -68,7 +69,7 @@ fn main() -> anyhow::Result<()> {
         Err(error) => {
             error!("{}", error.to_string());
             panic!();
-        }
+        },
     };
 
     if !config.disable_update_check {
@@ -90,7 +91,7 @@ fn main() -> anyhow::Result<()> {
 
 fn check_for_updates(no_color: bool) {
     use colored::*;
-    use update_informer::{registry, Check};
+    use update_informer::{Check, registry};
 
     if no_color {
         control::set_override(false);

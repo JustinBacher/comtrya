@@ -1,3 +1,73 @@
 [workspace]
 members = ["app", "jsonschemagen", "lib"]
 resolver = "2"
+
+[workspace.dependencies]
+age = { version = "0.10", features = ["armor"] }
+anyhow = "1.0"
+assert_cmd = "2.0"
+camino = { version = "1.1.9", features = ["serde", "serde1"] }
+clap = { version = "4.5.20", features = ["derive"] }
+clap_complete = "4.5.36"
+colored = "2.1"
+comfy-table = "7"
+config = "0.15"
+dirs-next = "2.0"
+file-owner = "0.1.2"
+file_diff = "1.0"
+flate2 = "1.0.34"
+gethostname = "0.5"
+gix = { version = "0.70.0", features = [
+    "blocking-network-client",
+    "blocking-http-transport-reqwest-rust-tls",
+    "status",
+] }
+ignore = "0.4"
+normpath = "1.2"
+octocrab = "0.41"
+os_info = "3.7"
+parking_lot = "0.12.3"
+petgraph = "0.6"
+predicates = "3.1"
+pretty_assertions = "1.4"
+rand = "0.8"
+regex = "1.11"
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "rustls-tls",
+] }
+rhai = { version = "1.19", features = ["serde"] }
+schemars = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_with = { version = "3.12.0", features = ["schemars_0_8", "json"] }
+serde_yml = "0"
+sha256 = "1.5"
+strip-ansi-escapes = "0.2"
+tar = "0.4.42"
+tealr = { version = "0.10.0", features = [
+    "mlua_lua54",
+    "mlua_anyhow",
+    "mlua_async",
+    "mlua_userdata-wrappers",
+    "tealr_derive",
+    "mlua_send",
+    "mlua_serialize",
+    "mlua",
+    "mlua_error-send",
+    "mlua_macros",
+    "mlua_vendored",
+] }
+tempfile = "3.13"
+tera = "1.20"
+tokio = "1.41"
+toml = "0.8"
+tracing = "0.1"
+tracing-journald = "0.3.0"
+tracing-subscriber = "0.3"
+trust-dns-resolver = "0.23.2"
+update-informer = "1.1"
+uzers = "0.12"
+walkdir = "2.5.0"
+which = "7.0"
+whoami = "1.5"

@@ -1,13 +1,15 @@
-use super::UserProvider;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::{
-    actions::user::add_group::UserAddGroup, actions::user::UserVariant, atoms::command::Exec,
-    utilities,
-};
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 use which::which;
+
+use super::UserProvider;
+use crate::{
+    actions::user::{UserVariant, add_group::UserAddGroup},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LinuxUserProvider {}
@@ -20,7 +22,7 @@ impl UserProvider for LinuxUserProvider {
             Err(_) => {
                 warn!(message = "Could not get the proper user add tool");
                 return Ok(vec![]);
-            }
+            },
         };
 
         // is a user name isn't provided, cant create a new user
@@ -82,7 +84,7 @@ impl UserProvider for LinuxUserProvider {
             Err(_) => {
                 warn!(message = "Could not get the proper user add tool");
                 return Ok(vec![]);
-            }
+            },
         };
 
         if user.group.is_empty() {
@@ -126,9 +128,14 @@ impl UserProvider for LinuxUserProvider {
 #[cfg(target_os = "linux")]
 #[cfg(test)]
 mod test {
-    use crate::actions::user::providers::{LinuxUserProvider, UserProvider};
-    use crate::actions::user::{add_group::UserAddGroup, UserVariant};
-    use crate::contexts::Contexts;
+    use crate::{
+        actions::user::{
+            UserVariant,
+            add_group::UserAddGroup,
+            providers::{LinuxUserProvider, UserProvider},
+        },
+        contexts::Contexts,
+    };
 
     #[test]
     fn test_add_user() {

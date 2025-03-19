@@ -5,12 +5,12 @@ pub mod link;
 pub mod remove;
 pub mod unarchive;
 
-use crate::actions::Action;
-use crate::manifests::Manifest;
-use anyhow::{anyhow, Result};
-use normpath::PathExt;
-use serde::{de::Error, Deserialize, Deserializer};
 use std::path::PathBuf;
+
+use anyhow::{Result, anyhow};
+use serde::{Deserialize, Deserializer, de::Error};
+
+use crate::{actions::Action, manifests::Manifest};
 
 pub trait FileAction: Action {
     fn resolve(&self, manifest: &Manifest, path: &str) -> anyhow::Result<PathBuf> {

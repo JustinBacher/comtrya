@@ -1,11 +1,14 @@
-use super::UserProvider;
-use crate::actions::user::{add_group::UserAddGroup, UserVariant};
-use crate::atoms::command::Exec;
-use crate::contexts::Contexts;
-use crate::steps::Step;
-use crate::utilities;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
+
+use super::UserProvider;
+use crate::{
+    actions::user::{UserVariant, add_group::UserAddGroup},
+    atoms::command::Exec,
+    contexts::Contexts,
+    steps::Step,
+    utilities,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FreeBSDUserProvider {}
@@ -117,9 +120,14 @@ impl UserProvider for FreeBSDUserProvider {
 #[cfg(target_os = "freebsd")]
 #[cfg(test)]
 mod test {
-    use crate::actions::user::providers::{FreeBSDUserProvider, UserProvider};
-    use crate::actions::user::{add_group::UserAddGroup, UserVariant};
-    use crate::contexts::Contexts;
+    use crate::{
+        actions::user::{
+            UserVariant,
+            add_group::UserAddGroup,
+            providers::{FreeBSDUserProvider, UserProvider},
+        },
+        contexts::Contexts,
+    };
 
     #[test]
     fn test_add_user() {

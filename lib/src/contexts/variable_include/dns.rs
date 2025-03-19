@@ -2,9 +2,10 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use reqwest::Url;
-use trust_dns_resolver::config::ResolverConfig;
-use trust_dns_resolver::config::ResolverOpts;
-use trust_dns_resolver::Resolver;
+use trust_dns_resolver::{
+    Resolver,
+    config::{ResolverConfig, ResolverOpts},
+};
 
 pub fn txt_record_values(url: &Url, contexts: &mut HashMap<String, String>) -> Result<()> {
     let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default())?;

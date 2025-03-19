@@ -1,13 +1,10 @@
-use super::User;
-use super::UserVariant;
-use crate::actions::Action;
-use crate::contexts::Contexts;
-use crate::manifests::Manifest;
-use crate::steps::Step;
 use std::ops::Deref;
 
 #[cfg(unix)]
 use tracing::debug;
+
+use super::{User, UserVariant};
+use crate::{actions::Action, contexts::Contexts, manifests::Manifest, steps::Step};
 
 pub type UserAdd = User;
 

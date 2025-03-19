@@ -1,14 +1,10 @@
-use super::providers::PackageProviders;
-use super::Package;
-use super::PackageVariant;
-use crate::actions::Action;
-use crate::contexts::Contexts;
-use crate::manifests::Manifest;
-use crate::steps::Step;
-use anyhow::anyhow;
 use std::ops::Deref;
-use tracing::debug;
-use tracing::span;
+
+use anyhow::anyhow;
+use tracing::{debug, span};
+
+use super::{Package, PackageVariant, providers::PackageProviders};
+use crate::{actions::Action, contexts::Contexts, manifests::Manifest, steps::Step};
 
 pub type PackageInstall = Package;
 
@@ -45,13 +41,13 @@ impl Action for PackageInstall {
                     PackageProviders::BsdPkg => debug!("Will attempt to install from local file."),
                     PackageProviders::Aptitude => {
                         debug!("Will attempt to install from local file.")
-                    }
+                    },
                     _ => {
                         return Err(anyhow!(
-                        "Package Provider, {}, isn't capabale of local file installs. Skipping action.",
-                        provider.name()
-                    ));
-                    }
+                            "Package Provider, {}, isn't capabale of local file installs. Skipping action.",
+                            provider.name()
+                        ));
+                    },
                 }
             }
 
@@ -86,19 +82,19 @@ mod tests {
         match actions.pop() {
             Some(Actions::PackageInstall(action)) => {
                 assert_eq!(vec!["bash"], action.action.list);
-            }
+            },
             _ => {
                 panic!("PackageInstall didn't deserialize to the correct type");
-            }
+            },
         };
 
         match actions.pop() {
             Some(Actions::PackageInstall(action)) => {
                 assert_eq!("curl", action.action.name.unwrap());
-            }
+            },
             _ => {
                 panic!("PackageInstall didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }

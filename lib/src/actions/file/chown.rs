@@ -1,9 +1,8 @@
-use crate::{actions::Action, steps::Step};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::FileAction;
-use crate::atoms::file::Chown;
+use crate::{actions::Action, atoms::file::Chown, steps::Step};
 
 #[derive(JsonSchema, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FileChown {
@@ -23,9 +22,7 @@ impl Action for FileChown {
 
     #[cfg(not(unix))]
     fn plan(
-        &self,
-        _: &crate::manifests::Manifest,
-        _: &crate::contexts::Contexts,
+        &self, _: &crate::manifests::Manifest, _: &crate::contexts::Contexts,
     ) -> anyhow::Result<Vec<crate::steps::Step>> {
         tracing::warn!("This action is not supported on windows.");
         Ok(vec![])
@@ -33,9 +30,7 @@ impl Action for FileChown {
 
     #[cfg(unix)]
     fn plan(
-        &self,
-        _: &crate::manifests::Manifest,
-        _: &crate::contexts::Contexts,
+        &self, _: &crate::manifests::Manifest, _: &crate::contexts::Contexts,
     ) -> anyhow::Result<Vec<crate::steps::Step>> {
         let steps = vec![Step {
             atom: Box::new(Chown {
@@ -69,10 +64,10 @@ mod tests {
                 assert_eq!("/home/test/one", action.action.path);
                 assert_eq!("test", action.action.user.unwrap());
                 assert_eq!(None, action.action.group);
-            }
+            },
             _ => {
                 panic!("FileCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 
@@ -90,10 +85,10 @@ mod tests {
                 assert_eq!("/home/test/one", action.action.path);
                 assert_eq!(None, action.action.user);
                 assert_eq!("test", action.action.group.unwrap());
-            }
+            },
             _ => {
                 panic!("FileCopy didn't deserialize to the correct type");
-            }
+            },
         };
     }
 }
