@@ -160,7 +160,11 @@ impl Source for Repo {
             Err(_) => self.checkout()?,
         };
 
+        let dirty = false;
+
         if repo.is_dirty()? {
+            dirty = true;
+
             repo.find_remote("main")?
                 .connect(Fetch)?
                 .prepare_fetch(Discard, ref_map::Options::default())?
@@ -177,6 +181,18 @@ impl Source for Repo {
                 .find_reference(&format!("tags/{}", version))?
                 .peel_to_tree()?,
         };
+
+        if dirty {
+            info!("Running install script")
+            
+            match tree.find_entry("install.lua") {
+                Some(entry) if entry.inner.mode.kind() == EntryKind::Blob => {
+                    self.runtime.exec(entry.object()?.data.to_str_lossy().to_string())
+                }
+                Some(entry) => Err(anyhow!("install.lua is a {:?}", entry.inner.mode.kind())),
+                None => (),
+                }
+        }
 
         match tree.find_entry("plugin.lua") {
             Some(entry) if entry.inner.mode.kind() == EntryKind::Blob => {
